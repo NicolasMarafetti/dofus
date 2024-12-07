@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { calculateXpGained } from "@/app/utils/xpCalculator";
+
 
 const prisma = new PrismaClient();
 
@@ -105,10 +107,17 @@ export async function POST(req: NextRequest) {
         let currentExp = 0;
 
         for (const craft of sortedCrafts) {
-            while (currentExp < requiredExp) {
-                plan.push(craft);
-                currentExp += craft.experience;
-                if (currentExp >= requiredExp) break;
+            const xpPerCraft = calculateXpGained(craft.experience, craft.level, currentLevel); // Calculer l'XP ajustée
+
+            console.log("xpPerCraft: ", xpPerCraft);
+
+            if (xpPerCraft > 0) {
+                const craftsNeeded = Math.ceil((requiredExp - currentExp) / xpPerCraft); // Nombre de crafts nécessaires
+
+                plan.push(...Array(craftsNeeded).fill(craft)); // Ajouter plusieurs fois le craft
+                currentExp += craftsNeeded * xpPerCraft;
+
+                if (currentExp >= requiredExp) break; // Arrêter si le niveau cible est atteint
             }
         }
 

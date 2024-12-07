@@ -1,17 +1,37 @@
 'use client';
 
+import { Resource } from "@prisma/client";
 import { useState } from "react";
 
 interface AddResourceProps {
+    resources: Resource[];
     onResourceAdded: () => void;
 }
 
-const AddResource: React.FC<AddResourceProps> = ({ onResourceAdded }) => {
+const AddResource: React.FC<AddResourceProps> = ({ resources, onResourceAdded }) => {
     const [name, setName] = useState<string>("");
     const [price, setPrice] = useState<string>("");
+    const [isDuplicate, setIsDuplicate] = useState<boolean>(false);
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputName = e.target.value;
+        setName(inputName);
+
+        // Vérifier si la ressource existe déjà
+        const exists = resources.some(
+            (resource) => resource.name.toLowerCase() === inputName.toLowerCase()
+        );
+        setIsDuplicate(exists);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isDuplicate) {
+            alert("La ressource existe déjà !");
+            return;
+        }
+
         try {
             const response = await fetch("/api/resources", {
                 method: "POST",
@@ -22,7 +42,7 @@ const AddResource: React.FC<AddResourceProps> = ({ onResourceAdded }) => {
             if (response.ok) {
                 setName("");
                 setPrice("");
-                onResourceAdded(); // Informer le parent que la ressource a été ajoutée
+                onResourceAdded(); // Recharge les ressources après l'ajout
             } else {
                 console.error("Erreur lors de l'ajout de la ressource.");
             }
@@ -32,26 +52,36 @@ const AddResource: React.FC<AddResourceProps> = ({ onResourceAdded }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="p-4">
+        <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm">
+            <label className="block mb-2 font-semibold">Nom de la ressource :</label>
             <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nom de la ressource"
-                className="border p-2 mr-2"
+                onChange={handleNameChange}
+                placeholder="Exemple : Pétale Diaphane"
+                className={`border p-2 w-full mb-4 ${isDuplicate ? "border-red-500" : "border-gray-300"
+                    }`}
                 required
             />
+            {isDuplicate && (
+                <p className="text-red-500 text-sm">
+                    Cette ressource existe déjà !
+                </p>
+            )}
+
+            <label className="block mb-2 font-semibold">Prix :</label>
             <input
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="Prix"
-                className="border p-2 mr-2"
+                placeholder="Exemple : 15"
+                className="border p-2 w-full mb-4"
                 required
             />
+
             <button
                 type="submit"
-                className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
                 Ajouter
             </button>

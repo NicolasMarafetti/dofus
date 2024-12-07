@@ -8,15 +8,15 @@ interface Resource {
 }
 
 interface AddCraftProps {
+    profession: string;
     resources: Resource[];
     onCraftAdded: () => void;
 }
 
-const AddCraft: React.FC<AddCraftProps> = ({ resources, onCraftAdded }) => {
+const AddCraft: React.FC<AddCraftProps> = ({ profession, resources, onCraftAdded }) => {
     const [name, setName] = useState<string>("");
     const [level, setLevel] = useState<number>(0);
     const [experience, setExperience] = useState<number>(0);
-    const [profession, setProfession] = useState<string>("");
     const [selectedResources, setSelectedResources] = useState<
         { resourceId: string; quantity: number }[]
     >([]);
@@ -60,7 +60,6 @@ const AddCraft: React.FC<AddCraftProps> = ({ resources, onCraftAdded }) => {
                 setName("");
                 setLevel(0);
                 setExperience(0);
-                setProfession("");
                 setSelectedResources([]);
                 onCraftAdded(); // Recharger les crafts après l'ajout
             } else {
@@ -86,25 +85,9 @@ const AddCraft: React.FC<AddCraftProps> = ({ resources, onCraftAdded }) => {
                 required
             />
 
-            <label className="block mb-2 font-semibold">Métier :</label>
-            <select
-                value={profession}
-                onChange={(e) => setProfession(e.target.value)}
-                className="border p-2 w-full mb-4"
-                required
-            >
-                <option value="">Sélectionnez un métier</option>
-                <option value="Bijoutier">Bijoutier</option>
-                <option value="Forgeron">Forgeron</option>
-                <option value="Sculpteur">Sculpteur</option>
-                <option value="Alchimiste">Alchimiste</option>
-                <option value="Tailleur">Tailleur</option>
-                <option value="Cordonnier">Cordonnier</option>
-                <option value="Paysan">Paysan</option>
-                <option value="Bûcheron">Bûcheron</option>
-                <option value="Mineur">Mineur</option>
-                {/* Ajoutez d'autres métiers ici */}
-            </select>
+            <p className="text-gray-700 mb-4">
+                <strong>Métier sélectionné :</strong> {profession}
+            </p>
 
             <label className="block mb-2 font-semibold">Niveau requis :</label>
             <input

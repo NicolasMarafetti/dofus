@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import { calculateXpGained } from "../utils/xpCalculator";
 
 interface PlanResult {
     groupedResources: GroupedResource[];
@@ -125,7 +126,11 @@ const PlanForm: React.FC = () => {
                                     kamas
                                 </p>
                                 <p>
-                                    <strong>Expérience totale :</strong> {(craft.experience * craft.quantity).toLocaleString()}
+                                    <strong>Expérience totale :</strong>{" "}
+                                    {(
+                                        calculateXpGained(craft.experience, craft.level, currentLevel) *
+                                        craft.quantity
+                                    ).toLocaleString()}
                                 </p>
                                 <ul className="list-disc list-inside mt-2">
                                     {craft.resources.map((res, i: number) => (
