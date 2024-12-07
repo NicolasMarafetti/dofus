@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Craft {
+  id         String          @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  level      Int
+  experience Int
+  profession String // Nouveau champ pour le métier
+  resources  CraftResource[]
+}
+
+model Resource {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  name          String          @unique
+  price         Float
+  CraftResource CraftResource[]
+}
+
+model CraftResource {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  quantity   Int
+  craftId    String   @db.ObjectId
+  craft      Craft    @relation(fields: [craftId], references: [id])
+  resourceId String   @db.ObjectId
+  resource   Resource @relation(fields: [resourceId], references: [id])
+}
