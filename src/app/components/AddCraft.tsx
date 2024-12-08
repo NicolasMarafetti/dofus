@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Resource {
     id: string;
@@ -14,18 +14,50 @@ interface AddCraftProps {
 }
 
 const AddCraft: React.FC<AddCraftProps> = ({ profession, resources, onCraftAdded }) => {
+    const [craftNames, setCraftNames] = useState<string[]>([]);
     const [name, setName] = useState<string>("");
     const [level, setLevel] = useState<number>(0);
-    const [experience, setExperience] = useState<number>(0);
     const [selectedResources, setSelectedResources] = useState<
         { resourceId: string; quantity: number }[]
     >([]);
+    const [error, setError] = useState<string | null>(null);
+
+    // Charger les noms existants au montage du composant
+    useEffect(() => {
+        async function fetchCraftNames() {
+            try {
+                const response = await fetch("/api/crafts/names"); // Endpoint qui retourne les noms
+                if (response.ok) {
+                    const names = await response.json();
+                    setCraftNames(names);
+                } else {
+                    console.error("Erreur lors du chargement des noms de crafts");
+                }
+            } catch (error) {
+                console.error("Erreur :", error);
+            }
+        }
+
+        fetchCraftNames();
+    }, []);
 
     const handleAddResource = () => {
         setSelectedResources([
             ...selectedResources,
             { resourceId: "", quantity: 1 },
         ]);
+    };
+
+    // Vérifier si le nom existe déjà lors de la saisie
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const name = event.target.value;
+        setName(name);
+
+        if (craftNames.includes(name)) {
+            setError(`Le craft "${name}" existe déjà.`);
+        } else {
+            setError(null);
+        }
     };
 
     const handleResourceChange = (index: number, key: string, value: string | number) => {
@@ -42,12 +74,9 @@ const AddCraft: React.FC<AddCraftProps> = ({ profession, resources, onCraftAdded
         const payload = {
             name,
             level,
-            experience,
             profession,
             resources: selectedResources,
         };
-
-        console.log("Payload envoyé :", payload); // Debug
 
         try {
             const response = await fetch("/api/crafts", {
@@ -59,7 +88,6 @@ const AddCraft: React.FC<AddCraftProps> = ({ profession, resources, onCraftAdded
             if (response.ok) {
                 setName("");
                 setLevel(0);
-                setExperience(0);
                 setSelectedResources([]);
                 onCraftAdded(); // Recharger les crafts après l'ajout
             } else {
@@ -79,11 +107,12 @@ const AddCraft: React.FC<AddCraftProps> = ({ profession, resources, onCraftAdded
             <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={handleNameChange}
                 placeholder="Exemple : Bouclier de Bouftou"
                 className="border p-2 w-full mb-4"
                 required
             />
+            {error && <p style={{ color: "red" }}>{error}</p>}
 
             <p className="text-gray-700 mb-4">
                 <strong>Métier sélectionné :</strong> {profession}
@@ -95,16 +124,6 @@ const AddCraft: React.FC<AddCraftProps> = ({ profession, resources, onCraftAdded
                 value={level}
                 onChange={(e) => setLevel(Number(e.target.value))}
                 placeholder="Exemple : 20"
-                className="border p-2 w-full mb-4"
-                required
-            />
-
-            <label className="block mb-2 font-semibold">Expérience gagnée :</label>
-            <input
-                type="number"
-                value={experience}
-                onChange={(e) => setExperience(Number(e.target.value))}
-                placeholder="Exemple : 400"
                 className="border p-2 w-full mb-4"
                 required
             />

@@ -9,9 +9,8 @@ datasource db {
 
 model Craft {
   id         String          @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
+  name       String          @unique
   level      Int
-  experience Int
   profession String // Nouveau champ pour le métier
   resources  CraftResource[]
 }

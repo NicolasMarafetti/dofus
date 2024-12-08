@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { calculateXpGained } from "@/app/utils/xpCalculator";
+import { calculateCraftExp, calculateXpGained } from "@/app/utils/xpCalculator";
 
 
 const prisma = new PrismaClient();
@@ -17,7 +17,6 @@ interface CraftPlan {
         quantity: number; // La quantité requise pour une création
     }[];
 }
-
 
 interface GroupedCraftPlan {
     craftId: string;
@@ -85,7 +84,7 @@ export async function POST(req: NextRequest) {
                 craftId: craft.id,
                 name: craft.name || "Craft inconnu",
                 level: craft.level || 0,
-                experience: craft.experience || 0,
+                experience: calculateCraftExp(craft.level || 0),
                 cost,
                 resources: craft.resources.map((res) => ({
                     name: res.resource?.name || "Ressource inconnue",
@@ -96,7 +95,13 @@ export async function POST(req: NextRequest) {
         });
 
         // Trier les crafts par coût par point d’expérience
-        const sortedCrafts = craftPlans.sort((a, b) => (a.cost / a.experience) - (b.cost / b.experience));
+        const sortedCrafts = craftPlans.sort((a, b) => {
+            const xpA = calculateXpGained(a.experience, a.level, currentLevel); // XP ajustée pour le craft A
+            const xpB = calculateXpGained(b.experience, b.level, currentLevel); // XP ajustée pour le craft B
+
+            // Trier par coût par point d'expérience ajustée
+            return (a.cost / xpA) - (b.cost / xpB);
+        });
 
         // Calculer l’expérience totale nécessaire
         const requiredExp = calculateRequiredExp(currentLevel, targetLevel);
@@ -108,8 +113,6 @@ export async function POST(req: NextRequest) {
 
         for (const craft of sortedCrafts) {
             const xpPerCraft = calculateXpGained(craft.experience, craft.level, currentLevel); // Calculer l'XP ajustée
-
-            console.log("xpPerCraft: ", xpPerCraft);
 
             if (xpPerCraft > 0) {
                 const craftsNeeded = Math.ceil((requiredExp - currentExp) / xpPerCraft); // Nombre de crafts nécessaires
@@ -171,11 +174,15 @@ export async function POST(req: NextRequest) {
     }
 }
 
+// Fonction pour calculer l'expérience cumulée jusqu'à un niveau donné
+function calculateTotalExp(level: number): number {
+    return 10 * Math.pow(level - 1, 2) + 10 * (level - 1);
+}
+
 // Fonction pour calculer l’expérience nécessaire entre deux niveaux
 function calculateRequiredExp(currentLevel: number, targetLevel: number): number {
-    let totalExp = 0;
-    for (let level = currentLevel; level < targetLevel; level++) {
-        totalExp += Math.floor(100 + Math.pow(level, 2.5)); // Ajustez cette formule selon les règles de Dofus
-    }
-    return totalExp;
+    const expAtCurrentLevel = calculateTotalExp(currentLevel);
+    const expAtTargetLevel = calculateTotalExp(targetLevel);
+
+    return expAtTargetLevel - expAtCurrentLevel;
 }

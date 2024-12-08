@@ -46,17 +46,28 @@ export async function POST(req: NextRequest) {
         const json = await req.json();
 
         // Vérification des données reçues
-        const { name, level, experience, profession, resources }: {
+        const { name, level, profession, resources }: {
             name: string;
             level: number;
-            experience: number;
             profession: string;
             resources: ResourceInput[];
         } = json || {};
 
-        if (!name || !level || !experience || !profession || !resources?.length) {
+        if (!name || !level || !profession || !resources?.length) {
             return NextResponse.json(
                 { error: "Paramètres invalides ou manquants." },
+                { status: 400 }
+            );
+        }
+
+        // Vérifier si un craft avec le même nom existe déjà
+        const existingCraft = await prisma.craft.findUnique({
+            where: { name },
+        });
+
+        if (existingCraft) {
+            return NextResponse.json(
+                { error: `Un craft avec le nom "${name}" existe déjà.` },
                 { status: 400 }
             );
         }
@@ -65,7 +76,6 @@ export async function POST(req: NextRequest) {
             data: {
                 name,
                 level,
-                experience,
                 profession,
                 resources: {
                     create: resources.map((res) => ({
