@@ -43,16 +43,7 @@ export default function ProfitableResources() {
             });
 
             if (response.ok) {
-                const updatedResource = await response.json();
-
-                // Mettre à jour l'état local
-                setResources((prevResources) =>
-                    prevResources.map((resource) =>
-                        resource.name === updatedResource.name
-                            ? { ...resource, difficulty: updatedResource.difficultyFactor }
-                            : resource
-                    )
-                );
+                fetchResources();
             } else {
                 console.error("Erreur lors de la mise à jour de la difficulté");
             }
