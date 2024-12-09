@@ -6,6 +6,7 @@ import NavBar from "../components/NavBar";
 import { PROFESSIONS } from "../constants/constants";
 import AddResource from "../components/AddResource";
 import ListResources from "../components/ListResources";
+import { Resource } from "@prisma/client";
 
 interface Craft {
     id: string; // Identifiant unique du craft
@@ -21,13 +22,6 @@ interface Craft {
             price: number; // Prix unitaire de la ressource
         };
     }[];
-}
-
-
-interface Resource {
-    id: string;
-    name: string;
-    price: number;
 }
 
 const CraftsPage: React.FC = () => {
