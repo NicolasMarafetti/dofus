@@ -1,5 +1,5 @@
 import PlanForm from "@/app/components/PlanForm";
-import NavBar from "../components/NavBat";
+import NavBar from "../components/NavBar";
 
 const PlanPage = () => {
     return (

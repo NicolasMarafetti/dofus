@@ -16,10 +16,11 @@ model Craft {
 }
 
 model Resource {
-  id            String          @id @default(auto()) @map("_id") @db.ObjectId
-  name          String          @unique
-  price         Float
-  CraftResource CraftResource[]
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  name             String          @unique
+  price            Float
+  difficultyFactor Float?
+  CraftResource    CraftResource[]
 }
 
 model CraftResource {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import AddCraft from "../components/AddCraft";
-import NavBar from "../components/NavBat";
+import NavBar from "../components/NavBar";
 import { PROFESSIONS } from "../constants/constants";
 import AddResource from "../components/AddResource";
 import ListResources from "../components/ListResources";
