@@ -9,13 +9,8 @@ interface ListResourcesProps {
     onDifficultyChange?: (name: string, difficulty: number) => void;
 }
 
-interface ResourceWithRentability extends Resource {
-    profitability: number;
-}
-
-const ListResources = ({ fetchResources, onDifficultyChange }: ListResourcesProps) => {
+const ListResources = ({ fetchResources, onDifficultyChange, resources }: ListResourcesProps) => {
     const [editPrice, setEditPrice] = useState<{ [key: string]: number }>({});
-    const [resourcesWithRentability, setResourcesWithRentability] = useState<ResourceWithRentability[]>([]);
 
     const handleUpdatePrice = async (id: string) => {
         try {
@@ -44,7 +39,7 @@ const ListResources = ({ fetchResources, onDifficultyChange }: ListResourcesProp
         <div>
             <h2 className="text-2xl font-bold mb-4">Liste des Ressources</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {resourcesWithRentability.map((resource) => (
+                {resources.map((resource) => (
                     <div key={resource.id} className="border rounded p-4 shadow-sm flex flex-col">
                         {/* Titre */}
                         <h3 className="font-semibold text-lg mb-2">{resource.name}</h3>
