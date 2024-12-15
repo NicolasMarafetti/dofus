@@ -18,8 +18,12 @@ model Craft {
 model Resource {
   id               String          @id @default(auto()) @map("_id") @db.ObjectId
   name             String          @unique
-  price            Float
+  price            Int
   difficultyFactor Float?
+  dropRate         Float? // Taux de drop (en %)
+  monsterLevel     Int? // Niveau des monstres
+  monsterCount     Int? // Nombre de monstres différents dans la zone
+  isDungeonBoss    Boolean?        @default(false) // Si c'est un boss de donjon
   CraftResource    CraftResource[]
 }
 

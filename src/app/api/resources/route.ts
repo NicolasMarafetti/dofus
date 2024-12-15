@@ -57,18 +57,36 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const { id, price }: { id: string; price: number } = await req.json();
+        const { id, dropRate, isDungeonBoss, monsterCount, monsterLevel, price }: {
+            id: string;
+            dropRate: number;
+            isDungeonBoss: boolean;
+            monsterCount: number;
+            monsterLevel: number;
+            price: number;
+        } = await req.json();
 
-        if (!id || price === undefined) {
+        if (!id || dropRate === undefined || isDungeonBoss === undefined || monsterLevel === undefined || price === undefined) {
             return NextResponse.json(
                 { error: "Paramètres invalides." },
                 { status: 400 }
             );
         }
 
+        let resourceDifficultyFactor = dropRate / 100;
+        if (isDungeonBoss) resourceDifficultyFactor /= 5;
+        if (monsterCount) resourceDifficultyFactor /= monsterCount;
+
         const updatedResource = await prisma.resource.update({
             where: { id },
-            data: { price },
+            data: {
+                dropRate,
+                isDungeonBoss,
+                monsterCount,
+                monsterLevel,
+                price,
+                difficultyFactor: resourceDifficultyFactor,
+            },
         });
 
         return NextResponse.json(updatedResource, { status: 200 });
