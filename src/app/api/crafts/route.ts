@@ -10,9 +10,13 @@ interface ResourceInput {
 
 export async function GET(req: NextRequest) {
     try {
+
+        console.log("Get Crafts");
+
         const { searchParams } = new URL(req.url);
         const profession = searchParams.get("profession") || "";
 
+        // Fetch the crafts from the database
         const crafts = await prisma.craft.findMany({
             where: { profession },
             include: {
@@ -22,20 +26,25 @@ export async function GET(req: NextRequest) {
             },
         });
 
-        // Ajout du coût total pour chaque craft
+        if (!crafts || crafts.length === 0) {
+            // If no crafts are found, return an empty array or an appropriate message
+            return NextResponse.json([], { status: 200 });
+        }
+
+        // Add the total cost for each craft
         const craftsWithCost = crafts.map((craft) => {
             const cost = craft.resources.reduce((total, res) => {
                 return total + (res.quantity * res.resource.price);
             }, 0);
 
-            return { ...craft, cost }; // Ajout de la propriété 'cost'
+            return { ...craft, cost }; // Add the 'cost' property
         });
 
         return NextResponse.json(craftsWithCost, { status: 200 });
     } catch (error) {
-        console.error("Erreur lors de la récupération des crafts :", error);
+        console.error("Error while fetching crafts:", error);
         return NextResponse.json(
-            { error: "Erreur interne du serveur." },
+            { error: "Internal server error." },
             { status: 500 }
         );
     }

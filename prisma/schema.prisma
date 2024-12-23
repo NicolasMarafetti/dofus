@@ -15,6 +15,25 @@ model Craft {
   resources  CraftResource[]
 }
 
+model Item {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  dofusdbId Int    @unique
+  image     String
+  level     Int?
+  name      String @unique
+  price     Int?
+  Job       Job?
+}
+
+model Job {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  resultItemId  String @unique @db.ObjectId
+  resultItem    Item   @relation(fields: [resultItemId], references: [id])
+  ingredientIds String
+  jobName       String
+  quantities    String
+}
+
 model Resource {
   id               String          @id @default(auto()) @map("_id") @db.ObjectId
   name             String          @unique

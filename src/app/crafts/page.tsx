@@ -1,12 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import AddCraft from "../components/AddCraft";
 import NavBar from "../components/NavBar";
 import { PROFESSIONS } from "../constants/constants";
-import AddResource from "../components/AddResource";
-import ListResources from "../components/ListResources";
-import { Resource } from "@prisma/client";
+import GetCrafts from "../components/GetCrafts";
 
 interface Craft {
     id: string; // Identifiant unique du craft
@@ -27,22 +24,14 @@ interface Craft {
 const CraftsPage: React.FC = () => {
     const [profession, setProfession] = useState<string>("Cordonnier");
     const [crafts, setCrafts] = useState<Craft[]>([]);
-    const [resources, setResources] = useState<Resource[]>([]);
     const [showResources, setShowResources] = useState<{ [key: string]: boolean }>({}); // Gestion des toggles
 
     // Récupérer les crafts pour une profession spécifique
     const fetchCrafts = useCallback(async () => {
-        const response = await fetch(`/api/crafts?profession=${profession}`);
+        const response = await fetch(`/api/jobs?profession=${profession}`);
         const data = await response.json();
         setCrafts(data);
     }, [profession]);
-
-    // Fonction pour récupérer les ressources depuis l'API
-    const fetchResources = async () => {
-        const response = await fetch("/api/resources");
-        const data = await response.json();
-        setResources(data);
-    };
 
     const handleDeleteCraft = async (id: string) => {
         if (!confirm("Êtes-vous sûr de vouloir supprimer ce craft ?")) return;
@@ -75,7 +64,6 @@ const CraftsPage: React.FC = () => {
 
     useEffect(() => {
         fetchCrafts();
-        fetchResources();
     }, [fetchCrafts]);
 
     return (
@@ -83,8 +71,6 @@ const CraftsPage: React.FC = () => {
             <NavBar />
             <div className="p-8 bg-gray-100">
                 <h1 className="text-3xl font-bold mb-4">Gestion des Crafts</h1>
-                <AddResource onResourceAdded={fetchResources} resources={resources} />
-                <ListResources fetchResources={fetchResources} resources={resources} />
 
                 <div className="mb-8">
                     <label className="block mb-2 font-semibold">Choisissez une profession :</label>
@@ -135,11 +121,10 @@ const CraftsPage: React.FC = () => {
                             </li>
                         ))}
                     </ul>
-
                 </div>
 
                 <div className="mt-8">
-                    <AddCraft profession={profession} resources={resources} onCraftAdded={fetchCrafts} />
+                    <GetCrafts profession={profession} onCraftUpdated={fetchCrafts} />
                 </div>
             </div>
         </div>

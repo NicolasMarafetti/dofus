@@ -7,6 +7,9 @@ const NavBar: React.FC = () => {
                 Dofus Leveling
             </Link>
             <div className="flex space-x-4">
+                <Link href="/items" className="hover:underline">
+                    Objets
+                </Link>
                 <Link href="/crafts" className="hover:underline">
                     Crafts
                 </Link>
