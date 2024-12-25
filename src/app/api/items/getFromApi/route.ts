@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
+    const forceUpdate = searchParams.get("forceUpdate") || false;
     const minLevel = searchParams.get("minLevel") || "";
     const maxLevel = searchParams.get("maxLevel") || "";
 
@@ -55,7 +56,8 @@ export async function GET(req: NextRequest) {
         });
 
         const existingIds = new Set(existingItems.map(item => item.dofusdbId));
-        const newItems = allItems.filter(item => !existingIds.has(item.dofusdbId));
+
+        const newItems = forceUpdate ? allItems : allItems.filter(item => !existingIds.has(item.dofusdbId));
 
         if (newItems.length > 0) {
             for (const item of newItems) {

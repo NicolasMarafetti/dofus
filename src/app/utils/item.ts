@@ -14,18 +14,44 @@ export interface ItemFromApi {
     }
 }
 
+// Fonction pour récupérer les détails des monstres
+const fetchMonstersDetails = async (monsterIds: number[]) => {
+    const monsterIdsQuery = monsterIds.map(id => `id[$in][]=${id}`).join('&');
+    const url = `https://api.dofusdb.fr/monsters?$limit=50&${monsterIdsQuery}&lang=fr`;
+
+    const response = await fetch(url);
+    const data: {
+        data: {
+            id: number;
+            name: {
+                fr: string;
+            };
+            isBoss: boolean;
+            img: string;
+            drops: {
+                objectId: number;
+                percentDropForGrade1: number;
+            }[];
+            grades: {
+                level: number
+            }[];
+        }[];
+    } = await response.json();
+
+    return data?.data || [];
+};
+
 export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean = true) => {
     const itemResponse = await fetch(`https://api.dofusdb.fr/items/${itemDofusDbId}?lang=fr`);
     const itemDataResponse: {
         craftVisible: string;
+        dropMonsterIds: number[];
         img: string;
         level: number;
         name: {
             fr: string;
         };
     } = await itemResponse.json();
-
-    console.log("itemDataResponse: ", itemDataResponse);
 
     // Créez ou mettez à jour l'Item
     const createdItem = await prisma.item.upsert({
@@ -42,7 +68,53 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
         },
     });
 
-    console.log("itemDataResponse.craftVisible: ", itemDataResponse.craftVisible);
+    // Gérer les informations des monstres qui droppent cet objet
+    if (itemDataResponse.dropMonsterIds?.length > 0) {
+        const monstersData = await fetchMonstersDetails(itemDataResponse.dropMonsterIds);
+
+        for (const monster of monstersData) {
+            const monsterMinLevel = monster.grades.reduce((min, grade) => Math.min(min, grade.level), 999);
+
+            const createdMonster = await prisma.monster.upsert({
+                where: { monsterDofusdbId: monster.id },
+                update: {
+                    name: monster.name.fr,
+                    level: monsterMinLevel,
+                    isDungeonBoss: monster.isBoss,
+                    img: monster.img
+                },
+                create: {
+                    monsterDofusdbId: monster.id,
+                    name: monster.name.fr,
+                    level: monsterMinLevel,
+                    isDungeonBoss: monster.isBoss,
+                    img: monster.img
+                }
+            });
+
+            // Ajouter les détails de drop
+            for (const drop of monster.drops) {
+                if (drop.objectId === itemDofusDbId) {
+                    await prisma.drop.upsert({
+                        where: {
+                            monsterId_itemId: {
+                                monsterId: createdMonster.id,
+                                itemId: createdItem.id
+                            }
+                        },
+                        update: {
+                            dropRate: drop.percentDropForGrade1,
+                        },
+                        create: {
+                            monsterId: createdMonster.id,
+                            itemId: createdItem.id,
+                            dropRate: drop.percentDropForGrade1,
+                        }
+                    });
+                }
+            }
+        }
+    }
 
     // Si l'objet possède un Job, liez-le avec Item.id
     if (saveJob && itemDataResponse.craftVisible) {
@@ -63,25 +135,46 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
             }
         } = await response.json();
 
-        await prisma.job.upsert({
+        // Enregistrement du craft
+        const jobCreated = await prisma.job.upsert({
             where: { resultItemId: createdItem.id },
             update: {
-                ingredientIds: itemApiData.ingredientIds.length > 0 ? JSON.stringify(itemApiData.ingredientIds) : undefined,
-                jobName: itemApiData.job.name.fr,
-                quantities: itemApiData.quantities.length > 0 ? JSON.stringify(itemApiData.quantities) : undefined
+                jobName: itemApiData.job.name.fr
             },
             create: {
                 resultItemId: createdItem.id,
-                ingredientIds: JSON.stringify(itemApiData.ingredientIds),
-                jobName: itemApiData.job.name.fr,
-                quantities: JSON.stringify(itemApiData.quantities)
+                jobName: itemApiData.job.name.fr
             },
         });
 
-        // Récupération des Items des ingrédients
+        // Création des objets ingrédients
         const ingredientIds = itemApiData.ingredientIds;
         for (const ingredientId of ingredientIds) {
             await createItemFromApi(ingredientId, false);
+        }
+
+        // Enregistrement des composants du craft
+        for (const key in itemApiData.ingredientIds) {
+            const ingredientId = itemApiData.ingredientIds[key];
+            const ingredientQuantity = itemApiData.quantities[key];
+
+            // Recherche de l'objet
+            const item = await prisma.item.findFirst({
+                where: { dofusdbId: ingredientId }
+            });
+
+            if (!item) {
+                console.error(`Item not found with dofusdbId: ${ingredientId}`);
+                continue;
+            }
+
+            await prisma.jobIngredient.create({
+                data: {
+                    jobId: jobCreated.id,
+                    itemId: item.id,
+                    quantity: ingredientQuantity
+                }
+            });
         }
     }
 }

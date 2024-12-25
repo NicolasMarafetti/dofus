@@ -15,23 +15,58 @@ model Craft {
   resources  CraftResource[]
 }
 
+model Drop {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  monsterId String  @db.ObjectId
+  monster   Monster @relation(fields: [monsterId], references: [id])
+  itemId    String  @db.ObjectId
+  item      Item    @relation(fields: [itemId], references: [id])
+  dropRate  Float
+
+  @@unique([monsterId, itemId])
+}
+
 model Item {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  dofusdbId Int    @unique
-  image     String
-  level     Int?
-  name      String @unique
-  price     Int?
-  Job       Job?
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  dofusdbId      Int             @unique
+  image          String
+  level          Int?
+  name           String          @unique
+  price1         Int? // Prix pour 1 exemplaire (nullable)
+  price10        Int? // Prix pour 10 exemplaires (nullable)
+  price100       Int? // Prix pour 100 exemplaires (nullable)
+  sellMode       String          @default("default") // "default" ou "single_only"
+  hasSalesData   Boolean         @default(false) // Indique si des ventes ont déjà été enregistrées
+  Job            Job?
+  jobIngredients JobIngredient[]
+  Drop           Drop[]
 }
 
 model Job {
-  id            String @id @default(auto()) @map("_id") @db.ObjectId
-  resultItemId  String @unique @db.ObjectId
-  resultItem    Item   @relation(fields: [resultItemId], references: [id])
-  ingredientIds String
-  jobName       String
-  quantities    String
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  resultItemId String          @unique @db.ObjectId
+  resultItem   Item            @relation(fields: [resultItemId], references: [id])
+  jobName      String
+  ingredients  JobIngredient[]
+}
+
+model JobIngredient {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  jobId    String @db.ObjectId
+  job      Job    @relation(fields: [jobId], references: [id])
+  itemId   String @db.ObjectId
+  item     Item   @relation(fields: [itemId], references: [id])
+  quantity Int
+}
+
+model Monster {
+  id               String  @id @default(auto()) @map("_id") @db.ObjectId
+  monsterDofusdbId Int     @unique
+  name             String
+  level            Int?
+  isDungeonBoss    Boolean @default(false)
+  img              String?
+  drops            Drop[]
 }
 
 model Resource {

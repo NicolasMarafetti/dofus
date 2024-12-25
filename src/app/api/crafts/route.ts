@@ -10,9 +10,6 @@ interface ResourceInput {
 
 export async function GET(req: NextRequest) {
     try {
-
-        console.log("Get Crafts");
-
         const { searchParams } = new URL(req.url);
         const profession = searchParams.get("profession") || "";
 
