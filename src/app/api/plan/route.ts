@@ -74,42 +74,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Calculer le coût total pour chaque craft
-        const craftPlans = crafts.map((craft) => {
-            const cost = craft.ingredients.reduce((total, res) => {
-                const price = res.item?.price1 || 0; // Utiliser 0 comme valeur par défaut
-                const quantity = res.quantity || 0;    // Utiliser 0 comme valeur par défaut
-                return total + quantity * price;
-            }, 0);
-
-            return {
-                craftId: craft.id,
-                name: craft.resultItem.name || "Craft inconnu",
-                level: craft.resultItem.level || 0,
-                experience: calculateCraftExp(craft.resultItem.level || 0),
-                cost,
-                ingredients: craft.ingredients.map((res) => ({
-                    name: res.item?.name || "Ressource inconnue",
-                    price: res.item?.price1 || 0,
-                    quantity: res.quantity || 0,
-                })),
-            };
-        });
-
-        // Trier les crafts par coût par point d’expérience
-        const sortedCrafts = craftPlans.sort((a, b) => {
-            const xpA = calculateXpGained(a.level, currentLevel); // XP ajustée pour le craft A
-            const xpB = calculateXpGained(b.level, currentLevel); // XP ajustée pour le craft B
-
-            // Trier par coût par point d'expérience ajustée
-            return (a.cost / xpA) - (b.cost / xpB);
-        });
-
-        // Calculer l’expérience totale nécessaire
-        const requiredExp = calculateRequiredExp(currentLevel, targetLevel);
-
         let dynamicLevel = currentLevel; // Niveau actuel du joueur
-        let currentExp = 0;
         const plan: CraftPlan[] = [];
 
         while (dynamicLevel < targetLevel) {
@@ -156,7 +121,6 @@ export async function POST(req: NextRequest) {
                         quantity: res.quantity || 0,
                     })),
                 });
-                currentExp += xpPerCraft;
             }
 
             dynamicLevel += 1; // Monter d'un niveau après avoir crafté suffisamment

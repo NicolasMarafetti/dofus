@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
         const minLevel = minParam ? parseInt(minParam) : 0;
         const maxLevel = maxParam ? parseInt(maxParam) : 200;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items: any = await prisma.$runCommandRaw({
             aggregate: 'Item',
             pipeline: [
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
             cursor: {}
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const unpricedItems = items.cursor.firstBatch.map((item: any) => ({
             id: item._id?.$oid || item.id,
             name: item.name,

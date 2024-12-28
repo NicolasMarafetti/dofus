@@ -2,25 +2,28 @@
 
 import { Item } from '@prisma/client';
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-export default function ItemsList() {
+interface ItemsListProps {
+    items: Item[];
+}
+
+export default function ItemsList({ items }: ItemsListProps) {
     const [minLevel, setMinLevel] = useState('0');
     const [maxLevel, setMaxLevel] = useState('200');
-    const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+    const [filteredItems, setFilteredItems] = useState<Item[]>(items);
 
-    const handleFilter = async () => {
-        const response = await fetch(
-            `/api/items?minLevel=${minLevel}&maxLevel=${maxLevel}`
-        );
-        const data = await response.json();
-        console.log("data: ", data);
-        setFilteredItems(data);
-    };
+    const handleFilter = useCallback(async () => {
+        const filteredItemsTemp = items.filter((item) => {
+            const level = item.level;
+            return level >= parseInt(minLevel) && level <= parseInt(maxLevel);
+        });
+        setFilteredItems(filteredItemsTemp);
+    }, [items, minLevel, maxLevel]);
 
     useEffect(() => {
         handleFilter();
-    }, [])
+    }, [handleFilter])
 
     return (
         <div>

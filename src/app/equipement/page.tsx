@@ -20,10 +20,10 @@ export default function EquipementPage() {
   return (
     <div className="flex flex-col">
         <NavBar />
-      <h1 className="text-2xl font-bold mb-4">Panneau d'Équipement</h1>
+      <h1 className="text-2xl font-bold mb-4">Panneau d&apos;Équipement</h1>
       <EquipementPanel onEquipementChange={handleEquipementChange} />
       <div className="mt-6">
-        <h2 className="text-xl font-semibold">Niveau Moyen de l'Équipement :</h2>
+        <h2 className="text-xl font-semibold">Niveau Moyen de l&apos;Équipement :</h2>
         <p className="text-2xl font-bold">{calculateAverageLevel()}</p>
       </div>
     </div>

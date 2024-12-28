@@ -3,7 +3,6 @@
 import { Item } from '@prisma/client';
 import { useCallback, useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
-import Image from 'next/image';
 import RécupérationDesObjets from '../components/RécupérationDesObjets';
 import ItemsList from '../components/ItemsList';
 
@@ -17,8 +16,6 @@ export default function ObjetPage() {
 
     const fetchItems = useCallback(async () => {
         try {
-            console.log("Je vais fetch");
-
             const response = await fetch(`/api/items?minLevel=${minLevel || 1}&maxLevel=${maxLevel || 200}`);
             if (!response.ok) {
                 const errorData = await response.json();
@@ -71,7 +68,7 @@ export default function ObjetPage() {
 
             <RécupérationDesObjets error={error} fetchItemsFromApi={fetchItemsFromApi} forceUpdate={forceUpdate} loading={loading} maxLevel={maxLevel} minLevel={minLevel} setForceUpdate={setForceUpdate} setMaxLevel={setMaxLevel} setMinLevel={setMinLevel} />
 
-            <ItemsList />
+            <ItemsList items={items} />
         </div>
     );
 }

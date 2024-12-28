@@ -118,7 +118,7 @@ const PlanForm: React.FC = () => {
                                 <p>
                                     <strong>Expérience totale :</strong>{" "}
                                     {(
-                                        calculateXpGained(craft.experience, craft.level, currentLevel) *
+                                        calculateXpGained(craft.level, currentLevel) *
                                         craft.quantity
                                     ).toLocaleString()}
                                 </p>
