@@ -20,6 +20,8 @@ export async function GET(req: NextRequest) {
                 }
             }
         });
+        
+        console.log("Items fetched:", items.length);
 
         return NextResponse.json(items, { status: 200 });
     } catch (error) {

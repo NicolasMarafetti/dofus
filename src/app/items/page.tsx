@@ -1,7 +1,7 @@
 'use client';
 
 import { Item } from '@prisma/client';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
 import Image from 'next/image';
 
@@ -15,6 +15,8 @@ export default function ObjetPage() {
 
     const fetchItems = useCallback(async () => {
         try {
+            console.log("Je vais fetch");
+
             const response = await fetch(`/api/items?minLevel=${minLevel || 1}&maxLevel=${maxLevel || 200}`);
             if (!response.ok) {
                 const errorData = await response.json();
@@ -32,6 +34,10 @@ export default function ObjetPage() {
             setLoading(false);
         }
     }, [minLevel, maxLevel]);
+
+    useEffect(() => {
+        fetchItems();
+    }, [fetchItems]);
 
     const fetchItemsFromApi = async (e: React.FormEvent) => {
         e.preventDefault();
