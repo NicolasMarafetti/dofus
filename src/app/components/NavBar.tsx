@@ -22,6 +22,9 @@ const NavBar: React.FC = () => {
                 <Link href="/equipement" className="hover:underline">
                     Equipements
                 </Link>
+                <Link href="/zones" className="hover:underline">
+                    Zones
+                </Link>
             </div>
         </nav>
     );
