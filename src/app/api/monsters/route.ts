@@ -1,11 +1,23 @@
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        const { searchParams } = new URL(req.url);
+        const minParam = searchParams.get("minLevel");
+        const maxParam = searchParams.get("maxLevel");
+        const minLevel = minParam ? parseInt(minParam) : 0;
+        const maxLevel = maxParam ? parseInt(maxParam) : 200;
+
         const monsters = await prisma.monster.findMany({
+            where: {
+                level: {
+                    gte: minLevel,
+                    lte: maxLevel
+                }
+            },
             include: {
                 drops: {
                     include: {

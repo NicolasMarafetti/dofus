@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import NavBar from '../components/NavBar';
 
@@ -30,17 +30,27 @@ export default function MonstersPage() {
     const [priceUpdates, setPriceUpdates] = useState<Record<string, { price1?: number; price10?: number; price100?: number }>>({});
     const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
-    async function fetchMonsters() {
+    // États pour les filtres
+    const [minLevel, setMinLevel] = useState<number | null>(null);
+    const [maxLevel, setMaxLevel] = useState<number | null>(null);
+
+    // Récupération des monstres avec filtres
+    const fetchMonsters = useCallback(async () => {
         setLoading(true);
-        const response = await fetch('/api/monsters');
+
+        const params = new URLSearchParams();
+        if (minLevel !== null) params.append('minLevel', minLevel.toString());
+        if (maxLevel !== null) params.append('maxLevel', maxLevel.toString());
+
+        const response = await fetch(`/api/monsters?${params.toString()}`);
         const data = await response.json();
         setMonsters(data);
         setLoading(false);
-    }
+    }, [minLevel, maxLevel]);
 
     useEffect(() => {
         fetchMonsters();
-    }, []);
+    }, [fetchMonsters]);
 
     // Gère la saisie des prix
     const handlePriceChange = (itemId: string, field: 'price1' | 'price10' | 'price100', value: number) => {
@@ -116,6 +126,37 @@ export default function MonstersPage() {
             <NavBar />
 
             <h1 className="text-2xl font-bold mb-4">Liste des Monstres</h1>
+
+            {/* Filtres par niveau */}
+            <div className="flex gap-4 mb-6">
+                <div>
+                    <label htmlFor="minLevel" className="block font-medium">Niveau Min</label>
+                    <input
+                        id="minLevel"
+                        type="number"
+                        value={minLevel ?? ''}
+                        onChange={(e) => setMinLevel(e.target.value ? Number(e.target.value) : null)}
+                        className="border rounded p-1"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="maxLevel" className="block font-medium">Niveau Max</label>
+                    <input
+                        id="maxLevel"
+                        type="number"
+                        value={maxLevel ?? ''}
+                        onChange={(e) => setMaxLevel(e.target.value ? Number(e.target.value) : null)}
+                        className="border rounded p-1"
+                    />
+                </div>
+                <button
+                    onClick={fetchMonsters}
+                    className="self-end bg-blue-500 text-white px-4 py-1 rounded"
+                >
+                    Filtrer
+                </button>
+            </div>
+
             {loading ? (
                 <p>Chargement des monstres...</p>
             ) : (

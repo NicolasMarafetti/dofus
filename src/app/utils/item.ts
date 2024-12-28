@@ -14,6 +14,29 @@ export interface ItemFromApi {
     }
 }
 
+interface ItemNotFoundResponse {
+    name: 'NotFound';
+    message: 'string';
+    code: 404;
+    className: "not-found";
+}
+
+interface ItemResponse {
+    ingredientIds: number[];
+    job: {
+        name: {
+            fr: string;
+        }
+    },
+    quantities: number[];
+    result: {
+        level: number;
+        name: {
+            fr: string;
+        };
+    }
+}
+
 // Fonction pour récupérer les détails des monstres
 const fetchMonstersDetails = async (monsterIds: number[]) => {
     const monsterIdsQuery = monsterIds.map(id => `id[$in][]=${id}`).join('&');
@@ -40,6 +63,14 @@ const fetchMonstersDetails = async (monsterIds: number[]) => {
 
     return data?.data || [];
 };
+
+function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item is ItemNotFoundResponse {
+    if ('name' in item && item.name === 'NotFound') {
+        return true;
+    }
+
+    return false;
+}
 
 export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean = true) => {
     const itemResponse = await fetch(`https://api.dofusdb.fr/items/${itemDofusDbId}?lang=fr`);
@@ -119,21 +150,12 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
     // Si l'objet possède un Job, liez-le avec Item.id
     if (saveJob && itemDataResponse.craftVisible) {
         const response = await fetch(`https://api.dofusdb.fr/recipes/${itemDofusDbId}?lang=fr`);
-        const itemApiData: {
-            ingredientIds: number[];
-            job: {
-                name: {
-                    fr: string;
-                }
-            },
-            quantities: number[];
-            result: {
-                level: number;
-                name: {
-                    fr: string;
-                };
-            }
-        } = await response.json();
+        const itemApiData: ItemResponse | ItemNotFoundResponse = await response.json();
+
+        if (isItemNotFoundResponse(itemApiData)) {
+            console.error(`Item not found with dofusdbId: ${itemDofusDbId}`);
+            return;
+        }
 
         // Enregistrement du craft
         const jobCreated = await prisma.job.upsert({
@@ -184,7 +206,7 @@ export const getItemMinPrice = (item: Item) => {
     const price10 = item.price10 ? item.price10 / 10 : null;
     const price100 = item.price100 ? item.price100 / 100 : null;
 
-    if(price1 === null && price10 === null && price100 === null) return 1;
+    if (price1 === null && price10 === null && price100 === null) return 1;
 
     return Math.min(price1 ?? Infinity, price10 ?? Infinity, price100 ?? Infinity);
 }
