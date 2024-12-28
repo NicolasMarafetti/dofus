@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
+import UnpricedItemListItem from './UnpricedItemListItem';
 
 interface UnpricedItem {
     id: string;
@@ -11,6 +12,9 @@ interface UnpricedItem {
 
 export default function UnpricedItems() {
     const [unpricedItems, setUnpricedItems] = useState<UnpricedItem[]>([]);
+    const [filteredItems, setFilteredItems] = useState<UnpricedItem[]>([]);
+    const [minLevel, setMinLevel] = useState<number | ''>('');
+    const [maxLevel, setMaxLevel] = useState<number | ''>('');
 
     // Récupérer les objets sans prix
     const fetchUnpricedItems = async () => {
@@ -19,6 +23,7 @@ export default function UnpricedItems() {
             if (response.ok) {
                 const data = await response.json();
                 setUnpricedItems(data);
+                setFilteredItems(data); // Initialiser le filtre avec toutes les données
             } else {
                 console.error('Erreur lors de la récupération des objets sans prix');
             }
@@ -31,67 +36,55 @@ export default function UnpricedItems() {
         fetchUnpricedItems();
     }, []);
 
-    console.log("unpricedItems: ", unpricedItems);
+    // Filtrer les objets selon le niveau
+    useEffect(() => {
+        let filtered = unpricedItems;
+
+        if (minLevel !== '') {
+            filtered = filtered.filter(item => item.level >= Number(minLevel));
+        }
+
+        if (maxLevel !== '') {
+            filtered = filtered.filter(item => item.level <= Number(maxLevel));
+        }
+
+        setFilteredItems(filtered);
+    }, [minLevel, maxLevel, unpricedItems]);
 
     if (unpricedItems.length === 0) return null;
 
     return (
         <div className="mb-8 p-4 border border-yellow-500 rounded-md bg-yellow-50">
-            <h2 className="text-2xl font-bold mb-2">⚠️ Objets sans Prix Renseigné</h2>
+            <h2 className="text-2xl font-bold mb-4">⚠️ Objets sans Prix Renseigné</h2>
+
+            {/* Filtres */}
+            <div className="mb-4 flex gap-4">
+                <input
+                    type="number"
+                    value={minLevel}
+                    onChange={(e) => setMinLevel(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Niveau Min"
+                    className="p-2 border rounded-md"
+                />
+                <input
+                    type="number"
+                    value={maxLevel}
+                    onChange={(e) => setMaxLevel(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Niveau Max"
+                    className="p-2 border rounded-md"
+                />
+            </div>
+
+            {/* Liste des objets filtrés */}
             <ul className="list-none list-inside">
-                {unpricedItems.map((item) => (
-                    <li key={item.id} className="mb-2">
-                        <strong>{item.name}</strong> (Niveau {item.level})
-                        <div className="grid grid-cols-3 gap-4 mt-2">
-                            <div>
-                                <label>Prix (1x)</label>
-                                <input
-                                    type="number"
-                                    defaultValue={item.price1 ?? ''}
-                                    onBlur={(e) => {
-                                        fetch('/api/items/price', {
-                                            method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ itemId: item.id, price1: Number(e.target.value) })
-                                        });
-                                    }}
-                                    className="border p-1 w-full"
-                                />
-                            </div>
-                            <div>
-                                <label>Prix (10x)</label>
-                                <input
-                                    type="number"
-                                    defaultValue={item.price10 ?? ''}
-                                    onBlur={(e) => {
-                                        fetch('/api/items/price', {
-                                            method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ itemId: item.id, price10: Number(e.target.value) })
-                                        });
-                                    }}
-                                    className="border p-1 w-full"
-                                />
-                            </div>
-                            <div>
-                                <label>Prix (100x)</label>
-                                <input
-                                    type="number"
-                                    defaultValue={item.price100 ?? ''}
-                                    onBlur={(e) => {
-                                        fetch('/api/items/price', {
-                                            method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ itemId: item.id, price100: Number(e.target.value) })
-                                        });
-                                    }}
-                                    className="border p-1 w-full"
-                                />
-                            </div>
-                        </div>
-                    </li>
+                {filteredItems.map((item) => (
+                    <UnpricedItemListItem
+                        key={item.id}
+                        fetchUnpricedItems={fetchUnpricedItems}
+                        item={item}
+                    />
                 ))}
             </ul>
         </div>
-    )
+    );
 }

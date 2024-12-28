@@ -1,32 +1,40 @@
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
-        const unpricedItems = await prisma.item.findMany({
-            where: {
-                OR: [
-                    { price1: null },
-                    { price10: null },
-                    { price100: null },
-                    { price1: 0 },
-                    { price10: 0 },
-                    { price100: 0 }
-                ]
-            },
-            select: {
-                id: true,
-                name: true,
-                level: true,
-                price1: true,
-                price10: true,
-                price100: true
-            }
+        const { searchParams } = new URL(req.url);
+        const minParam = searchParams.get("minLevel");
+        const maxParam = searchParams.get("maxLevel");
+        const minLevel = minParam ? parseInt(minParam) : 0;
+        const maxLevel = maxParam ? parseInt(maxParam) : 200;
+
+        const items: any = await prisma.$runCommandRaw({
+            aggregate: 'Item',
+            pipeline: [
+                {
+                    $match: {
+                        level: { $gte: minLevel, $lte: maxLevel },
+                        $or: [
+                            { price1: { $exists: false } },
+                            { price1: null }
+                        ]
+                    }
+                }
+            ],
+            cursor: {}
         });
 
-        console.log("unpricedItems: ", unpricedItems);
+        const unpricedItems = items.cursor.firstBatch.map((item: any) => ({
+            id: item._id?.$oid || item.id,
+            name: item.name,
+            level: item.level,
+            price1: item.price1,
+            price10: item.price10,
+            price100: item.price100
+        }));
 
         return NextResponse.json(unpricedItems, { status: 200 });
     } catch (error) {
