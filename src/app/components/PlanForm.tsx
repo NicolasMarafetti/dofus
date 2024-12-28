@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { calculateXpGained } from "../utils/xpCalculator";
+import ProfessionPicker from "./ProfessionPicker";
 
 interface PlanResult {
     groupedResources: GroupedResource[];
@@ -52,18 +53,7 @@ const PlanForm: React.FC = () => {
         <div className="p-4 border rounded bg-white shadow">
             <h2 className="text-2xl font-bold mb-4">Planification de montée en niveau</h2>
             <form onSubmit={handleSubmit}>
-                <label className="block mb-2 font-semibold">Métier :</label>
-                <select
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    className="border p-2 w-full mb-4"
-                    required
-                >
-                    <option value="">Sélectionnez un métier</option>
-                    <option value="Bijoutier">Bijoutier</option>
-                    <option value="Cordonnier">Cordonnier</option>
-                    {/* Ajoutez d'autres métiers */}
-                </select>
+                <ProfessionPicker value={profession} setProfession={setProfession} />
 
                 <label className="block mb-2 font-semibold">Niveau actuel :</label>
                 <input

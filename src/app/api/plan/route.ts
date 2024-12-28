@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { calculateCraftExp, calculateXpGained } from "@/app/utils/xpCalculator";
 
-
 const prisma = new PrismaClient();
 
 interface CraftPlan {
