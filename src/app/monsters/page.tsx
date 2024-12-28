@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Image from 'next/image';
 import NavBar from '../components/NavBar';
+import MonstersList from '../components/MonstersList';
 
 interface DropItem {
     id: string;
@@ -157,89 +157,7 @@ export default function MonstersPage() {
                 </button>
             </div>
 
-            {loading ? (
-                <p>Chargement des monstres...</p>
-            ) : (
-                sortedMonsters.map((monster) => (
-                    <div key={monster.id} className="mb-6 border p-4 rounded-md">
-                        <h2 className="text-xl font-bold">
-                            {monster.name} ({monster.level || 'N/A'})
-                        </h2>
-                        <p>Boss : {monster.isDungeonBoss ? 'Oui' : 'Non'}</p>
-                        <p>Gain Moyen : {monster.averageGain.toFixed(2)} Kamas</p>
-                        <div className="my-2">
-                            <Image
-                                src={monster.img || '/placeholder.png'}
-                                alt={monster.name}
-                                width={100}
-                                height={100}
-                                className="rounded-md"
-                            />
-                        </div>
-
-                        <h3 className="text-lg mt-4 font-bold">Objets Droppés :</h3>
-                        <table className="w-full border-collapse border border-gray-300 mt-2">
-                            <thead>
-                                <tr>
-                                    <th className="border p-2">Nom</th>
-                                    <th className="border p-2">Taux de Drop</th>
-                                    <th className="border p-2">Prix (1)</th>
-                                    <th className="border p-2">Prix (10)</th>
-                                    <th className="border p-2">Prix (100)</th>
-                                    <th className="border p-2">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {monster.drops.map((drop) => (
-                                    <tr key={drop.id}>
-                                        <td className="border p-2">{drop.name}</td>
-                                        <td className="border p-2">{drop.dropRate}%</td>
-                                        <td className="border p-2">
-                                            <input
-                                                type="number"
-                                                defaultValue={drop.price1 || 0}
-                                                onChange={(e) =>
-                                                    handlePriceChange(drop.id, 'price1', Number(e.target.value))
-                                                }
-                                            />
-                                        </td>
-                                        <td className="border p-2">
-                                            <input
-                                                type="number"
-                                                defaultValue={drop.price10 || 0}
-                                                onChange={(e) =>
-                                                    handlePriceChange(drop.id, 'price10', Number(e.target.value))
-                                                }
-                                            />
-                                        </td>
-                                        <td className="border p-2">
-                                            <input
-                                                type="number"
-                                                defaultValue={drop.price100 || 0}
-                                                onChange={(e) =>
-                                                    handlePriceChange(drop.id, 'price100', Number(e.target.value))
-                                                }
-                                            />
-                                        </td>
-                                        <td className="border p-2">
-                                            <button
-                                                className={`px-2 py-1 rounded ${updatingItemId === drop.id
-                                                    ? 'bg-gray-400 cursor-not-allowed'
-                                                    : 'bg-blue-500 text-white'
-                                                    }`}
-                                                onClick={() => handlePriceUpdate(drop.id)}
-                                                disabled={updatingItemId === drop.id}
-                                            >
-                                                {updatingItemId === drop.id ? 'Mise à jour...' : 'Mettre à jour'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ))
-            )}
+            <MonstersList loading={loading} sortedMonsters={sortedMonsters} handlePriceChange={handlePriceChange} handlePriceUpdate={handlePriceUpdate} updatingItemId={updatingItemId} />
         </div>
     );
 }

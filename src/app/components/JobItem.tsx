@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { JobComplete } from '../interfaces/job';
+import JobIngredients from './JobIngredients';
 
 interface JobItemProps {
     fetchCrafts: () => void;
@@ -85,6 +86,33 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
         }
     };
 
+    const removeIngredient = async (id: string) => {
+        try {
+            const response = await fetch('/api/ingredients/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ingredientId: id }),
+            });
+
+            if (!response.ok) {
+                console.error('Erreur lors de la suppression de l\'ingrédient');
+                return;
+            }
+
+            // Actualiser les données après la suppression
+            setEditingData((prev) => {
+                const updatedData = { ...prev };
+                delete updatedData[id];
+                return updatedData;
+            });
+
+            fetchCrafts(); // Actualise la liste des crafts après suppression
+        } catch (error) {
+            console.error('Erreur réseau :', error);
+        }
+    };
+
+
     const renderPriceField = (
         id: string,
         label: string,
@@ -158,52 +186,7 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
             </button>
 
             {/* Champs pour les ingrédients */}
-            {showResources[job.id] && (
-                <ul className="list-none mt-2 ml-4">
-                    {job.ingredients.map((ingredient, index) => {
-                        return (
-                            <li key={index} className="mt-2 p-2 border rounded-md">
-                                <strong>{ingredient.quantity}x {ingredient.item.name}</strong>
-                                {ingredient.item.sellMode === 'single_only' && (
-                                    <span className="ml-2 text-yellow-500">(Vente uniquement à l&apos;unité)</span>
-                                )}
-                                {!ingredient.item.hasSalesData && (
-                                    <span className="ml-2 text-red-500">(Aucune vente enregistrée)</span>
-                                )}
-
-                                <div className="grid grid-cols-3 gap-4 mt-1">
-                                    {renderPriceField(ingredient.item.id, 'Prix (1x)', 'price1', ingredient.item.price1)}
-                                    {ingredient.item.sellMode !== 'single_only' && (
-                                        <>
-                                            {renderPriceField(ingredient.item.id, 'Prix (10x)', 'price10', ingredient.item.price10)}
-                                            {renderPriceField(ingredient.item.id, 'Prix (100x)', 'price100', ingredient.item.price100)}
-                                        </>
-                                    )}
-                                </div>
-
-                                <label className="block mt-2">
-                                    Mode de vente :
-                                    <select
-                                        value={editingData[ingredient.item.id]?.sellMode || ingredient.item.sellMode}
-                                        onChange={(e) => handleDataChange(ingredient.item.id, 'sellMode', e.target.value)}
-                                        className="border p-1 ml-2"
-                                    >
-                                        <option value="default">Par défaut</option>
-                                        <option value="single_only">Uniquement à l&apos;unité</option>
-                                    </select>
-                                </label>
-
-                                <button
-                                    onClick={() => saveItemData(ingredient.item.id)}
-                                    className="mt-1 text-green-500 underline"
-                                >
-                                    Sauvegarder les prix
-                                </button>
-                            </li>
-                        );
-                    })}
-                </ul>
-            )}
+            {showResources[job.id] && <JobIngredients editingData={editingData} handleDataChange={handleDataChange} job={job} removeIngredient={removeIngredient} renderPriceField={renderPriceField} saveItemData={saveItemData} />}
         </li>
     );
 }

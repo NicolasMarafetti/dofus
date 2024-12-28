@@ -1,3 +1,4 @@
+import { calculateMosterTotalGain } from '@/app/utils/monster';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -28,22 +29,6 @@ export async function GET(req: NextRequest) {
         });
 
         const monstersWithGain = monsters.map((monster) => {
-            let totalGain = 0;
-
-            monster.drops.forEach((drop) => {
-                if (drop.item && drop.dropRate) {
-                    // Calcule le prix le plus élevé par unité
-                    const pricePerUnit = Math.max(
-                        drop.item.price1 || 0,
-                        drop.item.price10 ? drop.item.price10 / 10 : 0,
-                        drop.item.price100 ? drop.item.price100 / 100 : 0
-                    );
-
-                    // Ajoute le gain au total en fonction du taux de drop
-                    totalGain += pricePerUnit * (drop.dropRate / 100);
-                }
-            });
-
             return {
                 id: monster.id,
                 monsterDofusdbId: monster.monsterDofusdbId,
@@ -51,7 +36,7 @@ export async function GET(req: NextRequest) {
                 level: monster.level,
                 isDungeonBoss: monster.isDungeonBoss,
                 img: monster.img,
-                averageGain: totalGain,
+                averageGain: calculateMosterTotalGain(monster),
                 drops: monster.drops.map((drop) => ({
                     id: drop.item?.id,
                     name: drop.item?.name,
