@@ -16,9 +16,6 @@ const NavBar: React.FC = () => {
                 <Link href="/plan" className="hover:underline">
                     Planification
                 </Link>
-                <Link href="/resources" className="hover:underline">
-                    Ressources Rentables
-                </Link>
                 <Link href="/monsters" className="hover:underline">
                     Monstres
                 </Link>
