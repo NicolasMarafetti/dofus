@@ -201,6 +201,63 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
     }
 }
 
+export const deleteItemAndAllRelatedData = async (itemId: string) => {
+    console.log(`🔄 Début de la suppression de l'objet ${itemId} et de ses relations.`);
+
+    // Étape 1 : Supprimer les JobIngredient liés à l'Item
+    await prisma.jobIngredient.deleteMany({
+        where: {
+            itemId: itemId,
+        },
+    });
+    console.log(`✅ Relations JobIngredient supprimées.`);
+
+    // Étape 2 : Trouver les Jobs associés à l'Item
+    const jobs = await prisma.job.findMany({
+        where: {
+            resultItemId: itemId,
+        },
+        select: { id: true },
+    });
+
+    // Étape 3 : Supprimer les JobIngredient liés aux Jobs
+    const jobIds = jobs.map((job) => job.id);
+    if (jobIds.length > 0) {
+        await prisma.jobIngredient.deleteMany({
+            where: {
+                jobId: { in: jobIds },
+            },
+        });
+        console.log(`✅ Ingrédients des Jobs associés supprimés.`);
+    }
+
+    // Étape 4 : Supprimer les Jobs associés
+    await prisma.job.deleteMany({
+        where: {
+            id: { in: jobIds },
+        },
+    });
+    console.log(`✅ Relations Job supprimées.`);
+
+    // Étape 5 : Supprimer les relations Drop associées
+    await prisma.drop.deleteMany({
+        where: {
+            itemId: itemId,
+        },
+    });
+    console.log(`✅ Relations Drop supprimées.`);
+
+    // Étape 6 : Supprimer l'Item lui-même
+    await prisma.item.delete({
+        where: {
+            id: itemId,
+        },
+    });
+    console.log(`✅ Objet Item supprimé.`);
+
+    console.log(`🎯 Suppression complète de l'objet ${itemId} et de ses relations terminée.`);
+};
+
 export const getItemMinPrice = (item: Item) => {
     const price1 = item.price1 ?? null;
     const price10 = item.price10 ? item.price10 / 10 : null;

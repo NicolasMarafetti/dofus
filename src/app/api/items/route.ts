@@ -14,9 +14,6 @@ export async function GET(req: NextRequest) {
                 level: {
                     gte: Number(minLevel),
                     lte: Number(maxLevel)
-                },
-                Job: {
-                    isNot: null
                 }
             }
         });

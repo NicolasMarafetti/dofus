@@ -1,36 +1,17 @@
 'use client';
 
 import { useState } from "react";
-import { calculateXpGained } from "../utils/xpCalculator";
 import ProfessionPicker from "./ProfessionPicker";
+import PlanCrafts from "./PlanCrafts";
+import { GroupedCraftPlan } from "../interfaces/plan";
+import PlanWhatToBuy from "./PlanWhatToBuy";
+import { GroupedResource } from "../interfaces/jobIngredient";
 
-interface PlanResult {
+export interface PlanResult {
     groupedResources: GroupedResource[];
     groupedPlan: GroupedCraftPlan[];
     totalCost: number;
 }
-
-interface GroupedResource {
-    name: string;
-    price: number;
-    quantity: number;
-    totalCost: number;
-}
-
-interface GroupedCraftPlan {
-    craftId: string;
-    name: string;
-    level: number;
-    experience: number;
-    cost: number;
-    quantity: number;
-    resources: {
-        name: string;
-        price: number;
-        quantity: number;
-    }[];
-}
-
 
 const PlanForm: React.FC = () => {
     const [profession, setProfession] = useState<string>("");
@@ -48,6 +29,14 @@ const PlanForm: React.FC = () => {
         const data = await response.json();
         setPlan(data);
     };
+
+    const onSaveResourcePrice = async (itemId: string, price1: number | null, price10: number | null, price100: number | null) => {
+        await fetch("/api/items/price", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ itemId, price1, price10, price100 }),
+        });
+    }
 
     return (
         <div className="p-4 border rounded bg-white shadow">
@@ -87,51 +76,9 @@ const PlanForm: React.FC = () => {
                 <div className="mt-8">
                     <h3 className="text-xl font-semibold mb-4">Plan suggéré :</h3>
 
-                    {/* Ce que vous devez acheter */}
-                    <div className="mb-8">
-                        <h4 className="text-lg font-bold mb-2">Ressources à acheter :</h4>
-                        <ul className="list-disc list-inside">
-                            {plan.groupedResources.map((res: GroupedResource, index: number) => (
-                                <li key={index}>
-                                    {res.quantity.toLocaleString()}x {res.name} (Prix unitaire : {res.price}) -{" "}
-                                    <strong>{res.totalCost.toLocaleString()} kamas</strong>
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="mt-2 text-lg font-bold">
-                            Coût total des ressources : {plan.totalCost.toLocaleString()} kamas
-                        </p>
-                    </div>
+                    <PlanWhatToBuy plan={plan} onSaveResourcePrice={onSaveResourcePrice} />
 
-                    {/* Les crafts à effectuer */}
-                    <div>
-                        <h4 className="text-lg font-bold mb-2">Crafts à effectuer :</h4>
-                        {plan.groupedPlan.map((craft: GroupedCraftPlan, index: number) => (
-                            <div key={index} className="mb-4 border-b pb-4">
-                                <h5 className="font-semibold">
-                                    {craft.name} (x{craft.quantity.toLocaleString()})
-                                </h5>
-                                <p>
-                                    <strong>Coût total :</strong> {(craft.cost * craft.quantity).toLocaleString()}{" "}
-                                    kamas
-                                </p>
-                                <p>
-                                    <strong>Expérience totale :</strong>{" "}
-                                    {(
-                                        calculateXpGained(craft.level, currentLevel) *
-                                        craft.quantity
-                                    ).toLocaleString()}
-                                </p>
-                                <ul className="list-disc list-inside mt-2">
-                                    {craft.resources.map((res, i: number) => (
-                                        <li key={i}>
-                                            {res.quantity * craft.quantity}x {res.name} (Prix unitaire : {res.price})
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
+                    <PlanCrafts currentLevel={currentLevel} plan={plan} onSaveResourcePrice={onSaveResourcePrice} />
                 </div>
             )}
 

@@ -3,41 +3,19 @@ import { PrismaClient } from "@prisma/client";
 import { calculateCraftExp, calculateXpGained } from "@/app/utils/xpCalculator";
 import { calculateCraftCost } from "@/app/utils/job";
 import { JobComplete } from "@/app/interfaces/job";
+import { GroupedCraftPlan } from "@/app/interfaces/plan";
+import { GroupedResource, IngredientWithItem } from "@/app/interfaces/jobIngredient";
+import { getItemMinPrice } from "@/app/utils/item";
 
 const prisma = new PrismaClient();
 
 interface CraftPlan {
-    craftId: string; // L'ID unique du craft
-    name: string; // Le nom du craft
-    level: number; // Le niveau requis pour créer le craft
-    experience: number; // L'expérience obtenue pour un craft
-    cost: number; // Le coût total des ressources nécessaires pour un craft
-    resources: { // Les ressources nécessaires pour ce craft
-        name: string; // Le nom de la ressource
-        price: number; // Le prix unitaire de la ressource
-        quantity: number; // La quantité requise pour une création
-    }[];
-}
-
-interface GroupedCraftPlan {
     craftId: string;
     name: string;
     level: number;
     experience: number;
     cost: number;
-    quantity: number; // Nombre de fois que ce craft est nécessaire
-    resources: {
-        name: string;
-        price: number;
-        quantity: number;
-    }[];
-}
-
-interface GroupedResource {
-    name: string; // Nom de la ressource
-    price: number; // Prix unitaire
-    quantity: number; // Quantité totale nécessaire
-    totalCost: number; // Coût total de cette ressource
+    ingredients: IngredientWithItem[];
 }
 
 interface PlanResponse {
@@ -79,7 +57,12 @@ export async function POST(req: NextRequest) {
 
         while (dynamicLevel < targetLevel) {
             // Filtrer les crafts réalisables au niveau actuel
-            const availableCrafts = crafts.filter(craft => (craft.resultItem.level || 0) <= dynamicLevel);
+            const availableCrafts = crafts.filter(craft => {
+                return (craft.resultItem.level || 0) <= dynamicLevel
+            });
+
+            console.log("dynamicLevel", dynamicLevel);
+            console.log("availableCrafts.length: ", availableCrafts.length);
 
             if (availableCrafts.length === 0) {
                 throw new Error(`Aucun craft disponible pour le niveau ${dynamicLevel}.`);
@@ -91,7 +74,7 @@ export async function POST(req: NextRequest) {
                 const xpB = calculateXpGained(b.resultItem.level || 0, dynamicLevel);
 
                 const aCost = calculateCraftCost(a);
-                const bCost = calculateCraftCost(a);
+                const bCost = calculateCraftCost(b);
 
                 return (aCost / xpA) - (bCost / xpB);
             });
@@ -115,11 +98,7 @@ export async function POST(req: NextRequest) {
                     level: bestCraft.resultItem.level || 0,
                     experience: calculateCraftExp(bestCraft.resultItem.level || 0),
                     cost: calculateCraftCost(bestCraft),
-                    resources: bestCraft.ingredients.map((res) => ({
-                        name: res.item?.name || "Ressource inconnue",
-                        price: res.item?.price1 || 0,
-                        quantity: res.quantity || 0,
-                    })),
+                    ingredients: bestCraft.ingredients
                 });
             }
 
@@ -139,17 +118,18 @@ export async function POST(req: NextRequest) {
 
         // Regrouper les ressources nécessaires
         const groupedResources: GroupedResource[] = groupedPlan.reduce((acc, craft) => {
-            craft.resources.forEach((res) => {
-                const existing = acc.find((r) => r.name === res.name);
+            craft.ingredients.forEach((res) => {
+                const existing = acc.find((r) => r.item.name === res.item.name);
                 if (existing) {
                     existing.quantity += res.quantity * craft.quantity;
-                    existing.totalCost += res.quantity * craft.quantity * res.price;
+                    existing.totalCost += res.quantity * craft.quantity * getItemMinPrice(res.item);
                 } else {
                     acc.push({
-                        name: res.name,
-                        price: res.price,
+                        id: res.id,
+                        price: getItemMinPrice(res.item),
                         quantity: res.quantity * craft.quantity,
-                        totalCost: res.quantity * craft.quantity * res.price,
+                        totalCost: res.quantity * craft.quantity * getItemMinPrice(res.item),
+                        item: res.item
                     });
                 }
             });
