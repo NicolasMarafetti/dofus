@@ -35,8 +35,6 @@ export default function PlanCrafts({ currentLevel, plan, onSaveResourcePrice }: 
         setEditingResourceId(null); // Quitter le mode édition
     };
 
-    console.log("plan.groupedPlan: ", plan.groupedPlan);
-
     return (
         <div>
             <h4 className="text-lg font-bold mb-2">Crafts à effectuer :</h4>

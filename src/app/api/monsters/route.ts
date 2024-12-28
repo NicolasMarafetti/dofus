@@ -30,12 +30,7 @@ export async function GET(req: NextRequest) {
 
         const monstersWithGain = monsters.map((monster) => {
             return {
-                id: monster.id,
-                monsterDofusdbId: monster.monsterDofusdbId,
-                name: monster.name,
-                level: monster.level,
-                isDungeonBoss: monster.isDungeonBoss,
-                img: monster.img,
+                ...monster,
                 averageGain: calculateMosterTotalGain(monster),
                 drops: monster.drops.map((drop) => ({
                     id: drop.item?.id,

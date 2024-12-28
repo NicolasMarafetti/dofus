@@ -1,3 +1,4 @@
+import { Monster } from '@prisma/client';
 import Image from 'next/image';
 import React, { useState } from 'react'
 
@@ -10,13 +11,7 @@ interface DropItem {
     price100?: number;
 }
 
-interface MonsterWithGain {
-    id: string;
-    monsterDofusdbId: number;
-    name: string;
-    level?: number;
-    isDungeonBoss: boolean;
-    img?: string;
+export interface MonsterWithGain extends Monster {
     averageGain: number;
     drops: DropItem[];
 }
@@ -55,6 +50,7 @@ export default function MonstersList({ handlePriceChange, handlePriceUpdate, loa
                         {monster.name} ({monster.level || 'N/A'})
                     </h2>
                     <p>Boss : {monster.isDungeonBoss ? 'Oui' : 'Non'}</p>
+                    <p>Mini Boss : {monster.isMiniBoss ? 'Oui' : 'Non'}</p>
                     <p>Gain Moyen : {monster.averageGain.toFixed(2)} Kamas</p>
                     <div className="my-2">
                         <Image
@@ -76,13 +72,20 @@ export default function MonstersList({ handlePriceChange, handlePriceUpdate, loa
                                 <th className="border p-2">Prix (10)</th>
                                 <th className="border p-2">Prix (100)</th>
                                 <th className="border p-2">Actions</th>
-                                <th className="border p-2">Copier</th>
                             </tr>
                         </thead>
                         <tbody>
                             {monster.drops.map((drop) => (
                                 <tr key={drop.id}>
-                                    <td className="border p-2">{drop.name}</td>
+                                    <td className="border p-2">
+                                        <span className="mr-2"> {drop.name}</span>
+                                        <button
+                                            onClick={() => copyDropName(drop.id, drop.name)}
+                                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                                        >
+                                            {copiedDropId === drop.id ? 'Copié !' : '📋'}
+                                        </button>
+                                    </td>
                                     <td className="border p-2">{drop.dropRate}%</td>
                                     <td className="border p-2">
                                         <input
@@ -121,14 +124,6 @@ export default function MonstersList({ handlePriceChange, handlePriceUpdate, loa
                                             disabled={updatingItemId === drop.id}
                                         >
                                             {updatingItemId === drop.id ? 'Mise à jour...' : 'Mettre à jour'}
-                                        </button>
-                                    </td>
-                                    <td className="border p-2 text-center">
-                                        <button
-                                            onClick={() => copyDropName(drop.id, drop.name)}
-                                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                                        >
-                                            {copiedDropId === drop.id ? 'Copié !' : '📋'}
                                         </button>
                                     </td>
                                 </tr>

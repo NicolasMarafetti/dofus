@@ -36,7 +36,7 @@ export const deleteDuplicateJobIngredients = async () => {
                             id: ingredient.id,
                         },
                     });
-                    console.log(
+                    console.info(
                         `Doublon supprimé: Job ${job.id}, Ingredient ${ingredient.itemId}`
                     );
                 } else {
@@ -46,7 +46,7 @@ export const deleteDuplicateJobIngredients = async () => {
             }
         }
 
-        console.log('Doublons traités avec succès pour tous les jobs.');
+        console.info('Doublons traités avec succès pour tous les jobs.');
     } catch (error) {
         console.error('Erreur lors du traitement des doublons:', error);
     } finally {

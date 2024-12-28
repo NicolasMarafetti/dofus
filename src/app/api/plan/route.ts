@@ -61,9 +61,6 @@ export async function POST(req: NextRequest) {
                 return (craft.resultItem.level || 0) <= dynamicLevel
             });
 
-            console.log("dynamicLevel", dynamicLevel);
-            console.log("availableCrafts.length: ", availableCrafts.length);
-
             if (availableCrafts.length === 0) {
                 throw new Error(`Aucun craft disponible pour le niveau ${dynamicLevel}.`);
             }

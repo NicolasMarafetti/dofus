@@ -57,6 +57,7 @@ model Monster {
   name             String
   level            Int?
   isDungeonBoss    Boolean @default(false)
+  isMiniBoss       Boolean @default(false)
   img              String?
   drops            Drop[]
 }

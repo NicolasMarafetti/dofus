@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Item, PrismaClient } from "@prisma/client";
+import { fetchMonstersDetails } from "./monster";
 
 const prisma = new PrismaClient();
 
@@ -36,33 +37,6 @@ interface ItemResponse {
         };
     }
 }
-
-// Fonction pour récupérer les détails des monstres
-const fetchMonstersDetails = async (monsterIds: number[]) => {
-    const monsterIdsQuery = monsterIds.map(id => `id[$in][]=${id}`).join('&');
-    const url = `https://api.dofusdb.fr/monsters?$limit=50&${monsterIdsQuery}&lang=fr`;
-
-    const response = await fetch(url);
-    const data: {
-        data: {
-            id: number;
-            name: {
-                fr: string;
-            };
-            isBoss: boolean;
-            img: string;
-            drops: {
-                objectId: number;
-                percentDropForGrade1: number;
-            }[];
-            grades: {
-                level: number
-            }[];
-        }[];
-    } = await response.json();
-
-    return data?.data || [];
-};
 
 function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item is ItemNotFoundResponse {
     if ('name' in item && item.name === 'NotFound') {
@@ -202,7 +176,7 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
 }
 
 export const deleteItemAndAllRelatedData = async (itemId: string) => {
-    console.log(`🔄 Début de la suppression de l'objet ${itemId} et de ses relations.`);
+    console.info(`🔄 Début de la suppression de l'objet ${itemId} et de ses relations.`);
 
     // Étape 1 : Supprimer les JobIngredient liés à l'Item
     await prisma.jobIngredient.deleteMany({
@@ -210,7 +184,7 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
             itemId: itemId,
         },
     });
-    console.log(`✅ Relations JobIngredient supprimées.`);
+    console.info(`✅ Relations JobIngredient supprimées.`);
 
     // Étape 2 : Trouver les Jobs associés à l'Item
     const jobs = await prisma.job.findMany({
@@ -228,7 +202,7 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
                 jobId: { in: jobIds },
             },
         });
-        console.log(`✅ Ingrédients des Jobs associés supprimés.`);
+        console.info(`✅ Ingrédients des Jobs associés supprimés.`);
     }
 
     // Étape 4 : Supprimer les Jobs associés
@@ -237,7 +211,7 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
             id: { in: jobIds },
         },
     });
-    console.log(`✅ Relations Job supprimées.`);
+    console.info(`✅ Relations Job supprimées.`);
 
     // Étape 5 : Supprimer les relations Drop associées
     await prisma.drop.deleteMany({
@@ -245,7 +219,7 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
             itemId: itemId,
         },
     });
-    console.log(`✅ Relations Drop supprimées.`);
+    console.info(`✅ Relations Drop supprimées.`);
 
     // Étape 6 : Supprimer l'Item lui-même
     await prisma.item.delete({
@@ -253,9 +227,9 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
             id: itemId,
         },
     });
-    console.log(`✅ Objet Item supprimé.`);
+    console.info(`✅ Objet Item supprimé.`);
 
-    console.log(`🎯 Suppression complète de l'objet ${itemId} et de ses relations terminée.`);
+    console.info(`🎯 Suppression complète de l'objet ${itemId} et de ses relations terminée.`);
 };
 
 export const getItemMinPrice = (item: Item) => {

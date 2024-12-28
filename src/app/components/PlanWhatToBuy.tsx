@@ -40,7 +40,7 @@ export default function PlanWhatToBuy({ plan, onSaveResourcePrice }: PlanWhatToB
             <h4 className="text-lg font-bold mb-2">Ressources à acheter :</h4>
             <ul className="list-disc list-inside">
                 {plan.groupedResources.map((res, index: number) => (
-                    <li key={index} className="flex justify-between items-center mt-1">
+                    <li key={index} className="flex items-center mt-1">
                         <span>
                             {res.quantity.toLocaleString()}x {res.item.name} (Prix unitaire : {res.price}) -{' '}
                             <strong>{res.totalCost.toLocaleString()} kamas</strong>

@@ -2,30 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
-import MonstersList from '../components/MonstersList';
-
-interface DropItem {
-    id: string;
-    name: string;
-    dropRate: number;
-    price1?: number;
-    price10?: number;
-    price100?: number;
-}
-
-interface Monster {
-    id: string;
-    monsterDofusdbId: number;
-    name: string;
-    level?: number;
-    isDungeonBoss: boolean;
-    img?: string;
-    averageGain: number;
-    drops: DropItem[];
-}
+import MonstersList, { MonsterWithGain } from '../components/MonstersList';
 
 export default function MonstersPage() {
-    const [monsters, setMonsters] = useState<Monster[]>([]);
+    const [monsters, setMonsters] = useState<MonsterWithGain[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [priceUpdates, setPriceUpdates] = useState<Record<string, { price1?: number; price10?: number; price100?: number }>>({});
     const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
@@ -122,42 +102,46 @@ export default function MonstersPage() {
     });
 
     return (
-        <div className="p-4">
+        <>
             <NavBar />
 
-            <h1 className="text-2xl font-bold mb-4">Liste des Monstres</h1>
+            <div className="p-4">
 
-            {/* Filtres par niveau */}
-            <div className="flex gap-4 mb-6">
-                <div>
-                    <label htmlFor="minLevel" className="block font-medium">Niveau Min</label>
-                    <input
-                        id="minLevel"
-                        type="number"
-                        value={minLevel ?? ''}
-                        onChange={(e) => setMinLevel(e.target.value ? Number(e.target.value) : null)}
-                        className="border rounded p-1"
-                    />
+
+                <h1 className="text-2xl font-bold mb-4">Liste des Monstres</h1>
+
+                {/* Filtres par niveau */}
+                <div className="flex gap-4 mb-6">
+                    <div>
+                        <label htmlFor="minLevel" className="block font-medium">Niveau Min</label>
+                        <input
+                            id="minLevel"
+                            type="number"
+                            value={minLevel ?? ''}
+                            onChange={(e) => setMinLevel(e.target.value ? Number(e.target.value) : null)}
+                            className="border rounded p-1"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="maxLevel" className="block font-medium">Niveau Max</label>
+                        <input
+                            id="maxLevel"
+                            type="number"
+                            value={maxLevel ?? ''}
+                            onChange={(e) => setMaxLevel(e.target.value ? Number(e.target.value) : null)}
+                            className="border rounded p-1"
+                        />
+                    </div>
+                    <button
+                        onClick={fetchMonsters}
+                        className="self-end bg-blue-500 text-white px-4 py-1 rounded"
+                    >
+                        Filtrer
+                    </button>
                 </div>
-                <div>
-                    <label htmlFor="maxLevel" className="block font-medium">Niveau Max</label>
-                    <input
-                        id="maxLevel"
-                        type="number"
-                        value={maxLevel ?? ''}
-                        onChange={(e) => setMaxLevel(e.target.value ? Number(e.target.value) : null)}
-                        className="border rounded p-1"
-                    />
-                </div>
-                <button
-                    onClick={fetchMonsters}
-                    className="self-end bg-blue-500 text-white px-4 py-1 rounded"
-                >
-                    Filtrer
-                </button>
+
+                <MonstersList loading={loading} sortedMonsters={sortedMonsters} handlePriceChange={handlePriceChange} handlePriceUpdate={handlePriceUpdate} updatingItemId={updatingItemId} />
             </div>
-
-            <MonstersList loading={loading} sortedMonsters={sortedMonsters} handlePriceChange={handlePriceChange} handlePriceUpdate={handlePriceUpdate} updatingItemId={updatingItemId} />
-        </div>
+        </>
     );
 }
