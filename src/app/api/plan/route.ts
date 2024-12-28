@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { calculateCraftExp, calculateXpGained } from "@/app/utils/xpCalculator";
+import { calculateCraftCost } from "@/app/utils/job";
+import { JobComplete } from "@/app/interfaces/job";
 
 const prisma = new PrismaClient();
 
@@ -60,12 +62,13 @@ export async function POST(req: NextRequest) {
         }
 
         // Récupérer tous les crafts pour ce métier
-        const crafts = await prisma.craft.findMany({
-            where: { profession },
+        const crafts: JobComplete[] = await prisma.job.findMany({
+            where: { jobName: profession },
             include: {
-                resources: {
+                resultItem: true,
+                ingredients: {
                     include: {
-                        resource: true,
+                        item: true,
                     },
                 },
             },
@@ -73,21 +76,21 @@ export async function POST(req: NextRequest) {
 
         // Calculer le coût total pour chaque craft
         const craftPlans = crafts.map((craft) => {
-            const cost = craft.resources.reduce((total, res) => {
-                const price = res.resource?.price || 0; // Utiliser 0 comme valeur par défaut
+            const cost = craft.ingredients.reduce((total, res) => {
+                const price = res.item?.price1 || 0; // Utiliser 0 comme valeur par défaut
                 const quantity = res.quantity || 0;    // Utiliser 0 comme valeur par défaut
                 return total + quantity * price;
             }, 0);
 
             return {
                 craftId: craft.id,
-                name: craft.name || "Craft inconnu",
-                level: craft.level || 0,
-                experience: calculateCraftExp(craft.level || 0),
+                name: craft.resultItem.name || "Craft inconnu",
+                level: craft.resultItem.level || 0,
+                experience: calculateCraftExp(craft.resultItem.level || 0),
                 cost,
-                resources: craft.resources.map((res) => ({
-                    name: res.resource?.name || "Ressource inconnue",
-                    price: res.resource?.price || 0,
+                ingredients: craft.ingredients.map((res) => ({
+                    name: res.item?.name || "Ressource inconnue",
+                    price: res.item?.price1 || 0,
                     quantity: res.quantity || 0,
                 })),
             };
@@ -95,8 +98,8 @@ export async function POST(req: NextRequest) {
 
         // Trier les crafts par coût par point d’expérience
         const sortedCrafts = craftPlans.sort((a, b) => {
-            const xpA = calculateXpGained(a.experience, a.level, currentLevel); // XP ajustée pour le craft A
-            const xpB = calculateXpGained(b.experience, b.level, currentLevel); // XP ajustée pour le craft B
+            const xpA = calculateXpGained(a.level, currentLevel); // XP ajustée pour le craft A
+            const xpB = calculateXpGained(b.level, currentLevel); // XP ajustée pour le craft B
 
             // Trier par coût par point d'expérience ajustée
             return (a.cost / xpA) - (b.cost / xpB);
@@ -105,22 +108,58 @@ export async function POST(req: NextRequest) {
         // Calculer l’expérience totale nécessaire
         const requiredExp = calculateRequiredExp(currentLevel, targetLevel);
 
-        // Planifier les crafts pour atteindre l’expérience totale
+        let dynamicLevel = currentLevel; // Niveau actuel du joueur
+        let currentExp = 0;
         const plan: CraftPlan[] = [];
 
-        let currentExp = 0;
+        while (dynamicLevel < targetLevel) {
+            // Filtrer les crafts réalisables au niveau actuel
+            const availableCrafts = crafts.filter(craft => (craft.resultItem.level || 0) <= dynamicLevel);
 
-        for (const craft of sortedCrafts) {
-            const xpPerCraft = calculateXpGained(craft.experience, craft.level, currentLevel); // Calculer l'XP ajustée
-
-            if (xpPerCraft > 0) {
-                const craftsNeeded = Math.ceil((requiredExp - currentExp) / xpPerCraft); // Nombre de crafts nécessaires
-
-                plan.push(...Array(craftsNeeded).fill(craft)); // Ajouter plusieurs fois le craft
-                currentExp += craftsNeeded * xpPerCraft;
-
-                if (currentExp >= requiredExp) break; // Arrêter si le niveau cible est atteint
+            if (availableCrafts.length === 0) {
+                throw new Error(`Aucun craft disponible pour le niveau ${dynamicLevel}.`);
             }
+
+            // Trier les crafts par coût par point d'expérience gagnée (en tenant compte du niveau dynamique)
+            availableCrafts.sort((a, b) => {
+                const xpA = calculateXpGained(a.resultItem.level || 0, dynamicLevel);
+                const xpB = calculateXpGained(b.resultItem.level || 0, dynamicLevel);
+
+                const aCost = calculateCraftCost(a);
+                const bCost = calculateCraftCost(a);
+
+                return (aCost / xpA) - (bCost / xpB);
+            });
+
+            // Sélectionner le craft le plus rentable
+            const bestCraft = availableCrafts[0];
+            const xpPerCraft = calculateXpGained(bestCraft.resultItem.level || 0, dynamicLevel);
+
+            if (xpPerCraft <= 0) {
+                throw new Error(`Impossible de progresser avec les crafts disponibles.`);
+            }
+
+            // Calculer le nombre de crafts nécessaires pour passer au niveau suivant
+            const xpNeeded = calculateRequiredExp(dynamicLevel, dynamicLevel + 1);
+            const craftsNeeded = Math.ceil(xpNeeded / xpPerCraft);
+
+            for (let i = 0; i < craftsNeeded; i++) {
+                plan.push({
+                    craftId: bestCraft.id,
+                    name: bestCraft.resultItem.name || "Craft inconnu",
+                    level: bestCraft.resultItem.level || 0,
+                    experience: calculateCraftExp(bestCraft.resultItem.level || 0),
+                    cost: calculateCraftCost(bestCraft),
+                    resources: bestCraft.ingredients.map((res) => ({
+                        name: res.item?.name || "Ressource inconnue",
+                        price: res.item?.price1 || 0,
+                        quantity: res.quantity || 0,
+                    })),
+                });
+                currentExp += xpPerCraft;
+            }
+
+            dynamicLevel += 1; // Monter d'un niveau après avoir crafté suffisamment
         }
 
         // Regrouper les crafts similaires
@@ -133,7 +172,6 @@ export async function POST(req: NextRequest) {
             }
             return acc;
         }, []);
-
 
         // Regrouper les ressources nécessaires
         const groupedResources: GroupedResource[] = groupedPlan.reduce((acc, craft) => {
@@ -160,7 +198,6 @@ export async function POST(req: NextRequest) {
             (sum, res) => sum + res.totalCost,
             0
         );
-
 
         return NextResponse.json<PlanResponse>({ groupedResources, groupedPlan, totalCost }, { status: 200 });
 

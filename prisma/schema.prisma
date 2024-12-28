@@ -30,7 +30,7 @@ model Item {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
   dofusdbId      Int             @unique
   image          String
-  level          Int?
+  level          Int
   name           String          @unique
   price1         Int? // Prix pour 1 exemplaire (nullable)
   price10        Int? // Prix pour 10 exemplaires (nullable)
