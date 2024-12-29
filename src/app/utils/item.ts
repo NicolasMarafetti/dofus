@@ -38,6 +38,29 @@ interface ItemResponse {
     }
 }
 
+interface ItemNotFoundResponse {
+    name: 'NotFound';
+    message: 'string';
+    code: 404;
+    className: "not-found";
+}
+
+interface ItemResponse {
+    ingredientIds: number[];
+    job: {
+        name: {
+            fr: string;
+        }
+    },
+    quantities: number[];
+    result: {
+        level: number;
+        name: {
+            fr: string;
+        };
+    }
+}
+
 function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item is ItemNotFoundResponse {
     if ('name' in item && item.name === 'NotFound') {
         return true;
@@ -123,10 +146,9 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
 
     // Si l'objet possède un Job, liez-le avec Item.id
     if (saveJob && itemDataResponse.craftVisible) {
-        const response = await fetch(`https://api.dofusdb.fr/recipes/${itemDofusDbId}?lang=fr`);
-        const itemApiData: ItemResponse | ItemNotFoundResponse = await response.json();
+        const itemApiData = await getItemRecipe(itemDofusDbId);
 
-        if (isItemNotFoundResponse(itemApiData)) {
+        if (!itemApiData) {
             console.error(`Item not found with dofusdbId: ${itemDofusDbId}`);
             return;
         }
@@ -240,4 +262,13 @@ export const getItemMinPrice = (item: Item) => {
     if (price1 === null && price10 === null && price100 === null) return 1;
 
     return Math.min(price1 ?? Infinity, price10 ?? Infinity, price100 ?? Infinity);
+}
+
+export const getItemRecipe = async (itemId: number) => {
+    const response = await fetch(`https://api.dofusdb.fr/recipes/${itemId}?lang=fr`);
+    const itemApiData: ItemResponse | ItemNotFoundResponse = await response.json();
+
+    if(isItemNotFoundResponse(itemApiData)) return null;
+
+    return itemApiData;
 }

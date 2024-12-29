@@ -1,4 +1,4 @@
-import { createItemFromApi } from '@/app/utils/item';
+import { createItemFromApi, getItemRecipe } from '@/app/utils/item';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -26,9 +26,14 @@ export async function GET(req: NextRequest) {
             }
 
             const data = await response.json();
+
             const items: {
                 id: number;
                 craftVisible: boolean;
+                level: number;
+                name: {
+                    fr: string;
+                }
             }[] = data.data;
 
             if (items.length === 0) {
@@ -37,9 +42,9 @@ export async function GET(req: NextRequest) {
 
             // Traitez les items (si nécessaire)
             for (const item of items) {
-                const itemCraftVisible = item.craftVisible;
+                const itemRecipe = await getItemRecipe(item.id);
 
-                if (!itemCraftVisible) continue;
+                if (!itemRecipe) continue;
 
                 allItems.push({
                     dofusdbId: item.id
@@ -59,7 +64,7 @@ export async function GET(req: NextRequest) {
 
         const newItems = forceUpdate ? allItems : allItems.filter(item => !existingIds.has(item.dofusdbId));
 
-        if (newItems.length > 0) {
+        if (allItems.length > 0) {
             for (const item of newItems) {
                 try {
                     await createItemFromApi(item.dofusdbId);
