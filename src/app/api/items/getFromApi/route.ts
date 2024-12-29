@@ -1,4 +1,4 @@
-import { createItemFromApi, getItemRecipe } from '@/app/utils/item';
+import { createItemFromApi } from '@/app/utils/item';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
             const items: {
                 id: number;
                 craftVisible: boolean;
+                hasRecipe: boolean;
                 level: number;
                 name: {
                     fr: string;
@@ -42,9 +43,7 @@ export async function GET(req: NextRequest) {
 
             // Traitez les items (si nécessaire)
             for (const item of items) {
-                const itemRecipe = await getItemRecipe(item.id);
-
-                if (!itemRecipe) continue;
+                if (!item.hasRecipe) continue;
 
                 allItems.push({
                     dofusdbId: item.id

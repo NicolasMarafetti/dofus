@@ -63,12 +63,14 @@ export default function ObjetPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto min-h-screen bg-gray-100">
+        <>
             <NavBar />
 
-            <RécupérationDesObjets error={error} fetchItemsFromApi={fetchItemsFromApi} forceUpdate={forceUpdate} loading={loading} maxLevel={maxLevel} minLevel={minLevel} setForceUpdate={setForceUpdate} setMaxLevel={setMaxLevel} setMinLevel={setMinLevel} />
+            <div className="max-w-5xl mx-auto min-h-screen bg-gray-100">
+                <RécupérationDesObjets error={error} fetchItemsFromApi={fetchItemsFromApi} forceUpdate={forceUpdate} loading={loading} maxLevel={maxLevel} minLevel={minLevel} setForceUpdate={setForceUpdate} setMaxLevel={setMaxLevel} setMinLevel={setMinLevel} />
 
-            <ItemsList items={items} />
-        </div>
+                <ItemsList items={items} />
+            </div>
+        </>
     );
 }

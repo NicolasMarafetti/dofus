@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { JobComplete } from '../interfaces/job';
 import JobIngredients from './JobIngredients';
+import { calculateJobBenefice } from '../utils/job';
+import ItemImage from './ItemImage';
 
 interface JobItemProps {
     fetchCrafts: () => void;
@@ -112,7 +114,6 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
         }
     };
 
-
     const renderPriceField = (
         id: string,
         label: string,
@@ -133,13 +134,9 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
     return (
         <li key={job.id} className="mb-4 p-4 border rounded-md">
             <div>
-                <strong>{job.resultItem.name}</strong> (Niveau {job.resultItem.level})
-                {job.resultItem.sellMode === 'single_only' && (
-                    <span className="ml-2 text-yellow-500">(Vente uniquement à l&apos;unité)</span>
-                )}
-                {!job.resultItem.hasSalesData && (
-                    <span className="ml-2 text-red-500">(Aucune vente enregistrée)</span>
-                )}
+                <ItemImage item={job.resultItem} />
+                <span className="mr-4"><strong>{job.resultItem.name}</strong> (Niveau {job.resultItem.level})</span>
+                <span>Bénéfice: {calculateJobBenefice(job)} kamas</span>
                 <button
                     onClick={() => onToggleResources(job.id)}
                     className="ml-4 text-blue-500 underline hover:text-blue-700"

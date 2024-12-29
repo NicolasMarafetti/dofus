@@ -6,6 +6,7 @@ import ProfessionPicker from "../components/ProfessionPicker";
 import JobItem from "../components/JobItem";
 import { JobComplete } from "../interfaces/job";
 import UnpricedItems from "../components/UnpricedItems";
+import { calculateJobBenefice } from "../utils/job";
 
 const CraftsPage: React.FC = () => {
     const [profession, setProfession] = useState<string>("");
@@ -18,7 +19,13 @@ const CraftsPage: React.FC = () => {
 
         const response = await fetch(urlCall);
         const data = await response.json();
-        setJobs(data);
+
+        // Trier directement par bénéfice sans modifier l'objet JobComplete
+        const sortedJobs = data.sort((a: JobComplete, b: JobComplete) => {
+            return calculateJobBenefice(b) - calculateJobBenefice(a); // Tri décroissant
+        });
+
+        setJobs(sortedJobs);
     }, [profession]);
 
     const handleDeleteCraft = async (id: string) => {

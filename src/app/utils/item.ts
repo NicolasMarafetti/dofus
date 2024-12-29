@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Item, PrismaClient } from "@prisma/client";
 import { fetchMonstersDetails } from "./monster";
+import { createJobIngredients } from "./job";
 
 const prisma = new PrismaClient();
 
@@ -22,7 +23,7 @@ interface ItemNotFoundResponse {
     className: "not-found";
 }
 
-interface ItemResponse {
+export interface ItemResponse {
     ingredientIds: number[];
     job: {
         name: {
@@ -45,22 +46,6 @@ interface ItemNotFoundResponse {
     className: "not-found";
 }
 
-interface ItemResponse {
-    ingredientIds: number[];
-    job: {
-        name: {
-            fr: string;
-        }
-    },
-    quantities: number[];
-    result: {
-        level: number;
-        name: {
-            fr: string;
-        };
-    }
-}
-
 function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item is ItemNotFoundResponse {
     if ('name' in item && item.name === 'NotFound') {
         return true;
@@ -70,16 +55,17 @@ function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item
 }
 
 export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean = true) => {
-    const itemResponse = await fetch(`https://api.dofusdb.fr/items/${itemDofusDbId}?lang=fr`);
-    const itemDataResponse: {
-        craftVisible: string;
-        dropMonsterIds: number[];
-        img: string;
-        level: number;
-        name: {
-            fr: string;
-        };
-    } = await itemResponse.json();
+    // Je vérifie si l'objet est déjà créer
+    const existingItem = await prisma.item.findFirst({
+        where: { dofusdbId: itemDofusDbId }
+    });
+
+    if (existingItem) {
+        console.info(`🔍 L'objet ${itemDofusDbId} existe déjà.`);
+        return;
+    }
+
+    const itemDataResponse = await getItemFromApi(itemDofusDbId);
 
     // Créez ou mettez à jour l'Item
     const createdItem = await prisma.item.upsert({
@@ -166,34 +152,7 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
         });
 
         // Création des objets ingrédients
-        const ingredientIds = itemApiData.ingredientIds;
-        for (const ingredientId of ingredientIds) {
-            await createItemFromApi(ingredientId, false);
-        }
-
-        // Enregistrement des composants du craft
-        for (const key in itemApiData.ingredientIds) {
-            const ingredientId = itemApiData.ingredientIds[key];
-            const ingredientQuantity = itemApiData.quantities[key];
-
-            // Recherche de l'objet
-            const item = await prisma.item.findFirst({
-                where: { dofusdbId: ingredientId }
-            });
-
-            if (!item) {
-                console.error(`Item not found with dofusdbId: ${ingredientId}`);
-                continue;
-            }
-
-            await prisma.jobIngredient.create({
-                data: {
-                    jobId: jobCreated.id,
-                    itemId: item.id,
-                    quantity: ingredientQuantity
-                }
-            });
-        }
+        await createJobIngredients(jobCreated.id, itemApiData);
     }
 }
 
@@ -254,6 +213,22 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
     console.info(`🎯 Suppression complète de l'objet ${itemId} et de ses relations terminée.`);
 };
 
+export const getItemFromApi = async (itemDofusDbId: number) => {
+    const itemResponse = await fetch(`https://api.dofusdb.fr/items/${itemDofusDbId}?lang=fr`);
+    const itemDataResponse: {
+        craftVisible: string;
+        dropMonsterIds: number[];
+        hasRecipe: boolean;
+        img: string;
+        level: number;
+        name: {
+            fr: string;
+        };
+    } = await itemResponse.json();
+
+    return itemDataResponse;
+}
+
 export const getItemMinPrice = (item: Item) => {
     const price1 = item.price1 && item.price1 > 0 ? item.price1 : null;
     const price10 = item.price10 && item.price10 > 0 ? item.price10 / 10 : null;
@@ -268,7 +243,7 @@ export const getItemRecipe = async (itemId: number) => {
     const response = await fetch(`https://api.dofusdb.fr/recipes/${itemId}?lang=fr`);
     const itemApiData: ItemResponse | ItemNotFoundResponse = await response.json();
 
-    if(isItemNotFoundResponse(itemApiData)) return null;
+    if (isItemNotFoundResponse(itemApiData)) return null;
 
     return itemApiData;
 }
