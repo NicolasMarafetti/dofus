@@ -11,6 +11,7 @@ const prisma = new PrismaClient();
 
 interface CraftPlan {
     craftId: string;
+    jobName: string;
     name: string;
     level: number;
     experience: number;
@@ -67,8 +68,8 @@ export async function POST(req: NextRequest) {
 
             // Trier les crafts par coût par point d'expérience gagnée (en tenant compte du niveau dynamique)
             availableCrafts.sort((a, b) => {
-                const xpA = calculateXpGained(a.resultItem.level || 0, dynamicLevel);
-                const xpB = calculateXpGained(b.resultItem.level || 0, dynamicLevel);
+                const xpA = calculateXpGained(a.resultItem.level || 0, dynamicLevel, profession);
+                const xpB = calculateXpGained(b.resultItem.level || 0, dynamicLevel, profession);
 
                 const aCost = calculateCraftCost(a);
                 const bCost = calculateCraftCost(b);
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
 
             // Sélectionner le craft le plus rentable
             const bestCraft = availableCrafts[0];
-            const xpPerCraft = calculateXpGained(bestCraft.resultItem.level || 0, dynamicLevel);
+            const xpPerCraft = calculateXpGained(bestCraft.resultItem.level || 0, dynamicLevel, profession);
 
             if (xpPerCraft <= 0) {
                 throw new Error(`Impossible de progresser avec les crafts disponibles.`);
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
             for (let i = 0; i < craftsNeeded; i++) {
                 plan.push({
                     craftId: bestCraft.id,
+                    jobName: bestCraft.jobName,
                     name: bestCraft.resultItem.name || "Craft inconnu",
                     level: bestCraft.resultItem.level || 0,
                     experience: calculateCraftExp(bestCraft.resultItem.level || 0),

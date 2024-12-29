@@ -1,13 +1,15 @@
 export const PROFESSIONS = [
-    "Bijoutier",
-    "Cordonnier",
-    "Forgeron",
-    "Sculpteur",
     "Alchimiste",
-    "Tailleur",
+    "Bijoutier",
     "Bricoleur",
-    "Paysan",
     "Bûcheron",
+    "Chasseur",
+    "Cordonnier",
+    "Façonneur",
+    "Forgeron",
     "Mineur",
+    "Paysan",
     "Pêcheur",
-];
+    "Sculpteur",
+    "Tailleur",
+].sort();

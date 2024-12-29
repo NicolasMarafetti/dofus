@@ -233,9 +233,9 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
 };
 
 export const getItemMinPrice = (item: Item) => {
-    const price1 = item.price1 ?? null;
-    const price10 = item.price10 ? item.price10 / 10 : null;
-    const price100 = item.price100 ? item.price100 / 100 : null;
+    const price1 = item.price1 && item.price1 > 0 ? item.price1 : null;
+    const price10 = item.price10 && item.price10 > 0 ? item.price10 / 10 : null;
+    const price100 = item.price100 && item.price100 > 0 ? item.price100 / 100 : null;
 
     if (price1 === null && price10 === null && price100 === null) return 1;
 

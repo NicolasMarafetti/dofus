@@ -48,7 +48,7 @@ export default function PlanCrafts({ currentLevel, plan, onSaveResourcePrice }: 
                     </p>
                     <p>
                         <strong>Expérience totale :</strong>{" "}
-                        {(calculateXpGained(craft.level, currentLevel) * craft.quantity).toLocaleString()}
+                        {(calculateXpGained(craft.level, currentLevel, craft.jobName) * craft.quantity).toLocaleString()}
                     </p>
                     <ul className="list-disc list-inside mt-2">
                         {craft.ingredients.map((res, i: number) => (

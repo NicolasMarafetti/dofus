@@ -21,6 +21,7 @@ const PlanForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setPlan(null);
         const response = await fetch("/api/plan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
