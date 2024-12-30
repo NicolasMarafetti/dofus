@@ -20,6 +20,7 @@ model Drop {
 
 model Item {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  categoryName   String?
   dofusdbId      Int             @unique
   image          String
   level          Int

@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import UnpricedItemListItem from './UnpricedItemListItem';
-
-interface UnpricedItem {
-    id: string;
-    name: string;
-    level: number;
-    price1: number | null;
-    price10: number | null;
-    price100: number | null;
-}
+import { Item } from '@prisma/client';
+import { CATEGORY_MAPPING } from '../constants/constants';
 
 export default function UnpricedItems() {
-    const [unpricedItems, setUnpricedItems] = useState<UnpricedItem[]>([]);
-    const [filteredItems, setFilteredItems] = useState<UnpricedItem[]>([]);
+    const [unpricedItems, setUnpricedItems] = useState<Item[]>([]);
+    const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [minLevel, setMinLevel] = useState<number | ''>('');
     const [maxLevel, setMaxLevel] = useState<number | ''>('');
+    const [mainCategory, setMainCategory] = useState<string>(''); // Catégorie principale
 
     // Récupérer les objets sans prix
     const fetchUnpricedItems = async () => {
@@ -36,7 +30,7 @@ export default function UnpricedItems() {
         fetchUnpricedItems();
     }, []);
 
-    // Filtrer les objets selon le niveau
+    // Filtrer les objets selon le niveau et la catégorie principale
     useEffect(() => {
         let filtered = unpricedItems;
 
@@ -48,8 +42,13 @@ export default function UnpricedItems() {
             filtered = filtered.filter(item => item.level <= Number(maxLevel));
         }
 
+        if (mainCategory !== '') {
+            const subCategories = CATEGORY_MAPPING[mainCategory] || [];
+            filtered = filtered.filter(item => item.categoryName && subCategories.includes(item.categoryName));
+        }
+
         setFilteredItems(filtered);
-    }, [minLevel, maxLevel, unpricedItems]);
+    }, [minLevel, maxLevel, mainCategory, unpricedItems]);
 
     if (unpricedItems.length === 0) return null;
 
@@ -58,7 +57,7 @@ export default function UnpricedItems() {
             <h2 className="text-2xl font-bold mb-4">⚠️ Objets sans Prix Renseigné</h2>
 
             {/* Filtres */}
-            <div className="mb-4 flex gap-4">
+            <div className="mb-4 flex gap-4 flex-wrap">
                 <input
                     type="number"
                     value={minLevel}
@@ -73,6 +72,16 @@ export default function UnpricedItems() {
                     placeholder="Niveau Max"
                     className="p-2 border rounded-md"
                 />
+                <select
+                    value={mainCategory}
+                    onChange={(e) => setMainCategory(e.target.value)}
+                    className="p-2 border rounded-md"
+                >
+                    <option value="">Toutes les Catégories Principales</option>
+                    <option value="Ressources">Ressources</option>
+                    <option value="Consommables">Consommables</option>
+                    <option value="Équipements">Équipements</option>
+                </select>
             </div>
 
             {/* Liste des objets filtrés */}

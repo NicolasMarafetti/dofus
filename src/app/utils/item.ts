@@ -67,6 +67,16 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
 
     const itemDataResponse = await getItemFromApi(itemDofusDbId);
 
+    if(!itemDataResponse.exchangeable) {
+        console.info(`🔍 L'objet ${itemDofusDbId} n'est pas échangeable.`);
+        return;
+    }
+
+    if(!itemDataResponse.isSaleable) {
+        console.info(`🔍 L'objet ${itemDofusDbId} n'est pas vendable.`);
+        return;
+    }
+
     // Créez ou mettez à jour l'Item
     const createdItem = await prisma.item.upsert({
         where: { dofusdbId: itemDofusDbId },
@@ -78,7 +88,8 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
             dofusdbId: itemDofusDbId,
             image: itemDataResponse.img,
             level: itemDataResponse.level,
-            name: itemDataResponse.name.fr
+            name: itemDataResponse.name.fr,
+            categoryName: itemDataResponse.type.name.fr
         },
     });
 
@@ -213,17 +224,65 @@ export const deleteItemAndAllRelatedData = async (itemId: string) => {
     console.info(`🎯 Suppression complète de l'objet ${itemId} et de ses relations terminée.`);
 };
 
+export const deleteNonExchangeableItems = async () => {
+    const items = await prisma.item.findMany();
+
+    for (const item of items) {
+        const itemApiResponse = await getItemFromApi(item.dofusdbId);
+
+        if (!itemApiResponse.exchangeable) {
+            await deleteItemAndAllRelatedData(item.id);
+        }
+    }
+}
+
+export const deleteNonSaleableItems = async () => {
+    const items = await prisma.item.findMany();
+
+    for (const item of items) {
+        const itemApiResponse = await getItemFromApi(item.dofusdbId);
+
+        if (!itemApiResponse.isSaleable) {
+            await deleteItemAndAllRelatedData(item.id);
+        }
+    }
+}
+
+export const getItemsCategoryNames = async () => {
+    const items = await prisma.item.findMany();
+
+    for(const item of items) {
+        const itemResponse = await getItemFromApi(item.dofusdbId);
+
+        if(typeof itemResponse.type.name.fr !== "undefined"){
+            await prisma.item.update({
+                where: { id: item.id },
+                data: {
+                    categoryName: itemResponse.type.name.fr
+                }
+            });
+        }
+    }
+}
+
 export const getItemFromApi = async (itemDofusDbId: number) => {
     const itemResponse = await fetch(`https://api.dofusdb.fr/items/${itemDofusDbId}?lang=fr`);
     const itemDataResponse: {
         craftVisible: string;
         dropMonsterIds: number[];
+        exchangeable: boolean;
         hasRecipe: boolean;
         img: string;
+        isSaleable: boolean;
         level: number;
         name: {
             fr: string;
         };
+        type: {
+            name: {
+                fr: string;
+            }
+        }
     } = await itemResponse.json();
 
     return itemDataResponse;
