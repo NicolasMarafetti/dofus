@@ -75,7 +75,7 @@ export async function updateItemEffects(characterLevel: number, reExportAlreadyU
       });
     }
 
-    console.log('🎉 Tous les objets ont été mis à jour avec succès.');
+    console.info('🎉 Tous les objets ont été mis à jour avec succès.');
   } catch (error) {
     console.error('❌ Erreur lors de la mise à jour des objets :', error);
   } finally {

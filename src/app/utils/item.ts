@@ -2,7 +2,7 @@
 import { Item, PrismaClient } from "@prisma/client";
 import { fetchMonstersDetails } from "./monster";
 import { createJobIngredients } from "./job";
-import { Effect } from "../interfaces/item";
+import { Effect, ItemFromApiWhenTakingAllItems } from "../interfaces/item";
 import { fetchEffectsFromAPI } from "./effects";
 import { cleanEffectDescription } from "./parseEffect";
 
@@ -26,7 +26,7 @@ interface ItemNotFoundResponse {
     className: "not-found";
 }
 
-export interface ItemResponse {
+export interface ItemRecipesResponse {
     ingredientIds: number[];
     job: {
         name: {
@@ -49,7 +49,7 @@ interface ItemNotFoundResponse {
     className: "not-found";
 }
 
-function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item is ItemNotFoundResponse {
+function isItemNotFoundResponse(item: ItemRecipesResponse | ItemNotFoundResponse): item is ItemNotFoundResponse {
     if ('name' in item && item.name === 'NotFound') {
         return true;
     }
@@ -339,6 +339,45 @@ export const getItemFromApi = async (itemDofusDbId: number) => {
     return itemDataResponse;
 }
 
+export const getItemsWithRecipeFromApi = async (minLevel: number, maxLevel: number) => {
+    const allItems: { dofusdbId: number }[] = [];
+    let skip = 0;
+    const limit = 50;
+
+    while (true) {
+        // Appel vers l'API DofusDB avec pagination
+        const response = await fetch(
+            `https://api.dofusdb.fr/items?typeId[$ne]=203&$sort=-id&level[$gte]=${minLevel}&level[$lte]=${maxLevel}&lang=fr&$skip=${skip}&$limit=9999`
+        );
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération des données depuis l\'API externe.');
+        }
+
+        const data = await response.json();
+
+        const items: ItemFromApiWhenTakingAllItems[] = data.data;
+
+        if (items.length === 0) {
+            break; // Si aucun élément n'est retourné, terminez la boucle
+        }
+
+        // Traitez les items (si nécessaire)
+        for (const item of items) {
+            if (!item.hasRecipe) continue;
+
+            allItems.push({
+                dofusdbId: item.id
+            });
+        }
+
+        // Passer à la page suivante
+        skip += limit;
+    }
+
+    return allItems;
+}
+
 export const getItemMinPrice = (item: Item) => {
     const price1 = item.price1 && item.price1 > 0 ? item.price1 : null;
     const price10 = item.price10 && item.price10 > 0 ? item.price10 / 10 : null;
@@ -351,7 +390,7 @@ export const getItemMinPrice = (item: Item) => {
 
 export const getItemRecipe = async (itemId: number) => {
     const response = await fetch(`https://api.dofusdb.fr/recipes/${itemId}?lang=fr`);
-    const itemApiData: ItemResponse | ItemNotFoundResponse = await response.json();
+    const itemApiData: ItemRecipesResponse | ItemNotFoundResponse = await response.json();
 
     if (isItemNotFoundResponse(itemApiData)) return null;
 

@@ -35,8 +35,6 @@ export default function PlanWhatToBuy({ plan, onSaveResourcePrice }: PlanWhatToB
 
     if (!plan) return;
 
-    console.log("plan.groupedResources: ", plan.groupedResources);
-
     return (
         <div className="mb-8">
             <h4 className="text-lg font-bold mb-2">Ressources à acheter :</h4>

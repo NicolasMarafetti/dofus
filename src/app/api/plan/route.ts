@@ -74,6 +74,16 @@ export async function POST(req: NextRequest) {
                 const aCost = calculateCraftCost(a);
                 const bCost = calculateCraftCost(b);
 
+                // Gérer les cas où les gains d'expérience sont nuls
+                if (xpA === 0 && xpB === 0) {
+                    return aCost - bCost; // Trier par coût si les deux ont 0 XP
+                } else if (xpA === 0) {
+                    return 1; // Place `a` après `b` si `a` n'offre pas d'XP
+                } else if (xpB === 0) {
+                    return -1; // Place `b` après `a` si `b` n'offre pas d'XP
+                }
+
+                // Comparer normalement si les deux gains d'XP sont valides
                 return (aCost / xpA) - (bCost / xpB);
             });
 
@@ -82,6 +92,7 @@ export async function POST(req: NextRequest) {
             const xpPerCraft = calculateXpGained(bestCraft.resultItem.level || 0, dynamicLevel, profession);
 
             if (xpPerCraft <= 0) {
+                console.info("Meilleur craft: ", bestCraft, "XP par craft: ", xpPerCraft, "Niveau actuel: ", dynamicLevel, "profession: ", profession);
                 throw new Error(`Impossible de progresser avec les crafts disponibles.`);
             }
 

@@ -1,6 +1,6 @@
 export const CATEGORY_MAPPING: Record<string, string[]> = {
     Ressources: [
-        'Graine', 'Bois', 'Minerai', 'Pierre brute', 'Céréale', 'Fleur', 'Racine', 'Patte', 'Liquide', 'Peau', 'Étoffe', 'Viande', 'Vêtement', 'Essence de gardien de donjon', 'Œil', 'Plante', 'Préparation', 'Poisson', 'Ressources diverses', 'Bourgeon', 'Pierre précieuse', 'Écorce', 'Os', 'Poil', 'Huile', 'Poudre', 'Carte', 'Gelée', 'Clef', 'Métaria', 'Légume', 'Alliage', 'Champignon', 'Plume', 'Aile', 'Cuir', 'Planche', 'Galet', 'Nowel', 'Fruit', 'Oreille', 'Fragment de carte', 'Ressource de combat', 'Carapace', 'Laine', 'Œuf', 'Queue'
+        'Graine', 'Bois', 'Minerai', 'Pierre brute', 'Céréale', 'Fleur', 'Racine', 'Patte', 'Liquide', 'Peau', 'Étoffe', 'Viande', 'Vêtement', 'Essence de gardien de donjon', 'Œil', 'Plante', 'Préparation', 'Poisson', 'Ressources diverses', 'Bourgeon', 'Pierre précieuse', 'Écorce', 'Os', 'Poil', 'Huile', 'Poudre', 'Carte', 'Gelée', 'Clef', 'Métaria', 'Légume', 'Alliage', 'Champignon', 'Plume', 'Aile', 'Cuir', 'Planche', 'Galet', 'Nowel', 'Fruit', 'Oreille', 'Fragment de carte', 'Ressource de combat', 'Carapace', 'Laine', 'Œuf', 'Queue', 'Coquille'
     ],
     Consommables: [
         'Potion', 'Pain', 'Boisson', 'Potion de téléportation', 'Friandise', 'Prisme', 'Potion de conquête', 'Viande comestible', 'Poisson comestible', 'Fée d\'artifice', 'Bière'

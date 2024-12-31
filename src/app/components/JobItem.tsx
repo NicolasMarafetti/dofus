@@ -137,6 +137,12 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
                 <span className="mr-4"><strong>{job.resultItem.name}</strong> (Niveau {job.resultItem.level})</span>
                 <CopyButton text={job.resultItem.name} />
             </div>
+
+            {/* Affichage du métier */}
+            <div className="text-gray-600 italic">
+                Métier : <strong>{job.jobName}</strong>
+            </div>
+
             <span>Bénéfice: {calculateJobBenefice(job)} kamas</span>
             <button
                 onClick={() => onToggleResources(job.id)}

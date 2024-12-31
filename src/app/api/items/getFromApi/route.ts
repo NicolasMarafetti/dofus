@@ -1,3 +1,4 @@
+import { ItemFromApiWhenTakingAllItems } from '@/app/interfaces/item';
 import { createItemFromApi } from '@/app/utils/item';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,15 +28,7 @@ export async function GET(req: NextRequest) {
 
             const data = await response.json();
 
-            const items: {
-                id: number;
-                craftVisible: boolean;
-                hasRecipe: boolean;
-                level: number;
-                name: {
-                    fr: string;
-                }
-            }[] = data.data;
+            const items: ItemFromApiWhenTakingAllItems[] = data.data;
 
             if (items.length === 0) {
                 break; // Si aucun élément n'est retourné, terminez la boucle
