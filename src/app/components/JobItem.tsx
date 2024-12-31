@@ -3,6 +3,7 @@ import { JobComplete } from '../interfaces/job';
 import JobIngredients from './JobIngredients';
 import { calculateJobBenefice } from '../utils/job';
 import ItemImage from './ItemImage';
+import CopyButton from './CopyButton';
 
 interface JobItemProps {
     fetchCrafts: () => void;
@@ -35,7 +36,6 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
             };
         } = {};
 
-        // Initialisation pour l'objet principal
         initialData[job.resultItem.id] = {
             price1: job.resultItem.price1 ?? null,
             price10: job.resultItem.price10 ?? null,
@@ -44,7 +44,6 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
             hasSalesData: job.resultItem.hasSalesData ?? false,
         };
 
-        // Initialisation pour les ingrédients
         job.ingredients.forEach((ingredient) => {
             initialData[ingredient.item.id] = {
                 price1: ingredient.item.price1 ?? null,
@@ -84,6 +83,7 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
                 console.error('Erreur lors de la mise à jour');
             }
         } catch (error) {
+            alert('Erreur réseau : ' + error);
             console.error('Erreur réseau :', error);
         }
     };
@@ -101,14 +101,13 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
                 return;
             }
 
-            // Actualiser les données après la suppression
             setEditingData((prev) => {
                 const updatedData = { ...prev };
                 delete updatedData[id];
                 return updatedData;
             });
 
-            fetchCrafts(); // Actualise la liste des crafts après suppression
+            fetchCrafts();
         } catch (error) {
             console.error('Erreur réseau :', error);
         }
@@ -133,23 +132,24 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
 
     return (
         <li key={job.id} className="mb-4 p-4 border rounded-md">
-            <div>
+            <div className="flex items-center gap-2">
                 <ItemImage item={job.resultItem} />
                 <span className="mr-4"><strong>{job.resultItem.name}</strong> (Niveau {job.resultItem.level})</span>
-                <span>Bénéfice: {calculateJobBenefice(job)} kamas</span>
-                <button
-                    onClick={() => onToggleResources(job.id)}
-                    className="ml-4 text-blue-500 underline hover:text-blue-700"
-                >
-                    {showResources[job.id] ? "Masquer" : "Afficher"} les ressources
-                </button>
-                <button
-                    onClick={() => onDelete(job.id)}
-                    className="text-red-500 underline hover:text-red-700 ml-4"
-                >
-                    Supprimer
-                </button>
+                <CopyButton text={job.resultItem.name} />
             </div>
+            <span>Bénéfice: {calculateJobBenefice(job)} kamas</span>
+            <button
+                onClick={() => onToggleResources(job.id)}
+                className="ml-4 text-blue-500 underline hover:text-blue-700"
+            >
+                {showResources[job.id] ? "Masquer" : "Afficher"} les ressources
+            </button>
+            <button
+                onClick={() => onDelete(job.id)}
+                className="text-red-500 underline hover:text-red-700 ml-4"
+            >
+                Supprimer
+            </button>
 
             {/* Champs de prix pour l'objet principal */}
             <div className="grid grid-cols-3 gap-4 mt-2">
@@ -182,8 +182,16 @@ export default function JobItem({ fetchCrafts, job, onToggleResources, onDelete,
                 Sauvegarder les données
             </button>
 
-            {/* Champs pour les ingrédients */}
-            {showResources[job.id] && <JobIngredients editingData={editingData} handleDataChange={handleDataChange} job={job} removeIngredient={removeIngredient} renderPriceField={renderPriceField} saveItemData={saveItemData} />}
+            {showResources[job.id] && (
+                <JobIngredients
+                    editingData={editingData}
+                    handleDataChange={handleDataChange}
+                    job={job}
+                    removeIngredient={removeIngredient}
+                    renderPriceField={renderPriceField}
+                    saveItemData={saveItemData}
+                />
+            )}
         </li>
     );
 }

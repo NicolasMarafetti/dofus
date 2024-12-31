@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
 interface UnpricedItemProps {
-    fetchUnpricedItems: () => Promise<void>;
     item: {
         id: string;
         name: string;
@@ -9,10 +8,11 @@ interface UnpricedItemProps {
         price1: number | null;
         price10: number | null;
         price100: number | null;
-    }
+    },
+    updateItemPrices: (itemId: string, price1: number | null, price10: number | null, price100: number | null) => Promise<void>;
 }
 
-export default function UnpricedItemListItem({ fetchUnpricedItems, item }: UnpricedItemProps) {
+export default function UnpricedItemListItem({ item, updateItemPrices }: UnpricedItemProps) {
     const [prices, setPrices] = useState({
         price1: item.price1 ?? '',
         price10: item.price10 ?? '',
@@ -30,17 +30,7 @@ export default function UnpricedItemListItem({ fetchUnpricedItems, item }: Unpri
     const handleSave = async () => {
         setIsSaving(true); // Active l'état de sauvegarde
         try {
-            await fetch('/api/items/price', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    itemId: item.id,
-                    price1: Number(prices.price1) || null,
-                    price10: Number(prices.price10) || null,
-                    price100: Number(prices.price100) || null
-                })
-            });
-            fetchUnpricedItems(); // Rafraîchit les données après la mise à jour
+            await updateItemPrices(item.id, Number(prices.price1) || null, Number(prices.price10) || null, Number(prices.price100) || null);
         } catch (error) {
             console.error('Erreur lors de la sauvegarde des prix :', error);
         } finally {
@@ -61,8 +51,8 @@ export default function UnpricedItemListItem({ fetchUnpricedItems, item }: Unpri
 
     return (
         <li className="mb-4 border p-4 rounded-md">
-            <div className="flex justify-between items-center">
-                <strong>{item.name}</strong> (Niveau {item.level})
+            <div className="flex items-center">
+                <span><strong>{item.name}</strong> (Niveau {item.level})</span>
                 <button
                     onClick={handleCopyName}
                     className="ml-4 px-2 py-1 border rounded-md bg-gray-200 hover:bg-gray-300 text-sm"
@@ -103,9 +93,8 @@ export default function UnpricedItemListItem({ fetchUnpricedItems, item }: Unpri
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className={`px-4 py-2 rounded ${
-                        isSaving ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
-                    } text-white`}
+                    className={`px-4 py-2 rounded ${isSaving ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+                        } text-white`}
                 >
                     {isSaving ? 'Enregistrement...' : 'Enregistrer'}
                 </button>

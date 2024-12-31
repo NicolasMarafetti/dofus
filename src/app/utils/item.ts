@@ -2,6 +2,9 @@
 import { Item, PrismaClient } from "@prisma/client";
 import { fetchMonstersDetails } from "./monster";
 import { createJobIngredients } from "./job";
+import { Effect } from "../interfaces/item";
+import { fetchEffectsFromAPI } from "./effects";
+import { cleanEffectDescription } from "./parseEffect";
 
 const prisma = new PrismaClient();
 
@@ -54,6 +57,22 @@ function isItemNotFoundResponse(item: ItemResponse | ItemNotFoundResponse): item
     return false;
 }
 
+export const calculateEffectPower = (effect: Effect) => {
+    const averageEffectQuantity = (effect.from + effect.to) / 2;
+    return averageEffectQuantity * effect.effectPowerRate;
+}
+
+export const calculateItemPower = (item: Item) => {
+    const effects = JSON.parse(item.effects as string);
+    let power = 0;
+
+    for (const effect of effects) {
+        power += calculateEffectPower(effect);
+    }
+
+    return power;
+}
+
 export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean = true) => {
     // Je vérifie si l'objet est déjà créer
     const existingItem = await prisma.item.findFirst({
@@ -67,14 +86,29 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
 
     const itemDataResponse = await getItemFromApi(itemDofusDbId);
 
-    if(!itemDataResponse.exchangeable) {
-        console.info(`🔍 L'objet ${itemDofusDbId} n'est pas échangeable.`);
+    // Vérifications standard
+    if (!itemDataResponse.exchangeable || !itemDataResponse.isSaleable || itemDataResponse.type.name.fr.includes("obsolètes")) {
+        console.info(`🔍 L'objet ${itemDofusDbId} ne remplit pas les critères.`);
         return;
     }
 
-    if(!itemDataResponse.isSaleable) {
-        console.info(`🔍 L'objet ${itemDofusDbId} n'est pas vendable.`);
-        return;
+    // Récupération et nettoyage des effets
+    const finalItemEffects = [];
+    for (const effect of itemDataResponse.effects || []) {
+        const effectData = await fetchEffectsFromAPI(effect.effectId);
+
+        if (!effectData || effectData.effectPowerRate === 0) {
+            continue; // Ignorer les effets sans puissance
+        }
+
+        const effectDescriptionFr = cleanEffectDescription(effectData.description.fr);
+
+        finalItemEffects.push({
+            from: effect.from,
+            to: effect.to,
+            effect: effectDescriptionFr,
+            effectPowerRate: parseFloat(effectData.effectPowerRate.toFixed(2))
+        });
     }
 
     // Créez ou mettez à jour l'Item
@@ -82,14 +116,16 @@ export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean 
         where: { dofusdbId: itemDofusDbId },
         update: {
             level: itemDataResponse.level,
-            name: itemDataResponse.name.fr
+            name: itemDataResponse.name.fr,
+            effects: JSON.stringify(finalItemEffects)
         },
         create: {
             dofusdbId: itemDofusDbId,
             image: itemDataResponse.img,
             level: itemDataResponse.level,
             name: itemDataResponse.name.fr,
-            categoryName: itemDataResponse.type.name.fr
+            categoryName: itemDataResponse.type.name.fr,
+            effects: JSON.stringify(finalItemEffects)
         },
     });
 
@@ -248,13 +284,23 @@ export const deleteNonSaleableItems = async () => {
     }
 }
 
+export const deleteObsoleteItems = async () => {
+    const items = await prisma.item.findMany();
+
+    for (const item of items) {
+        if (item.categoryName && item.categoryName.includes("obsolètes")) {
+            await deleteItemAndAllRelatedData(item.id);
+        }
+    }
+}
+
 export const getItemsCategoryNames = async () => {
     const items = await prisma.item.findMany();
 
-    for(const item of items) {
+    for (const item of items) {
         const itemResponse = await getItemFromApi(item.dofusdbId);
 
-        if(typeof itemResponse.type.name.fr !== "undefined"){
+        if (typeof itemResponse.type.name.fr !== "undefined") {
             await prisma.item.update({
                 where: { id: item.id },
                 data: {
@@ -270,6 +316,11 @@ export const getItemFromApi = async (itemDofusDbId: number) => {
     const itemDataResponse: {
         craftVisible: string;
         dropMonsterIds: number[];
+        effects: {
+            from: number;
+            to: number;
+            effectId: number;
+        }[];
         exchangeable: boolean;
         hasRecipe: boolean;
         img: string;

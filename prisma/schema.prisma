@@ -30,6 +30,7 @@ model Item {
   price100       Int? // Prix pour 100 exemplaires (nullable)
   sellMode       String          @default("default") // "default" ou "single_only"
   hasSalesData   Boolean         @default(false) // Indique si des ventes ont déjà été enregistrées
+  effects        Json?
   Job            Job?
   jobIngredients JobIngredient[]
   Drop           Drop[]

@@ -50,6 +50,26 @@ export default function UnpricedItems() {
         setFilteredItems(filtered);
     }, [minLevel, maxLevel, mainCategory, unpricedItems]);
 
+    const updateItemPrices = async (itemId: string, price1: number | null, price10: number | null, price100: number | null) => {
+        try {
+            await fetch("/api/items/price", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    itemId,
+                    price1,
+                    price10,
+                    price100,
+                }),
+            });
+
+            // Suppression de l'objet dans la liste des objets dont j'ai besoin du prix
+            setUnpricedItems((prev) => prev.filter((item) => item.id !== itemId));
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour des prix :", error);
+        }
+    }
+
     if (unpricedItems.length === 0) return null;
 
     return (
@@ -78,9 +98,11 @@ export default function UnpricedItems() {
                     className="p-2 border rounded-md"
                 >
                     <option value="">Toutes les Catégories Principales</option>
-                    <option value="Ressources">Ressources</option>
-                    <option value="Consommables">Consommables</option>
-                    <option value="Équipements">Équipements</option>
+                    {
+                        Object.keys(CATEGORY_MAPPING).map((category) => (
+                            <option key={category} value={category}>{category}</option>
+                        ))
+                    }
                 </select>
             </div>
 
@@ -89,8 +111,8 @@ export default function UnpricedItems() {
                 {filteredItems.map((item) => (
                     <UnpricedItemListItem
                         key={item.id}
-                        fetchUnpricedItems={fetchUnpricedItems}
                         item={item}
+                        updateItemPrices={updateItemPrices}
                     />
                 ))}
             </ul>

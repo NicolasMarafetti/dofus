@@ -62,6 +62,14 @@ export default function Home() {
             <p className="text-gray-600">Analysez les zones et optimisez vos sessions de farm.</p>
           </div>
         </Link>
+
+        {/* Lien vers la Puissance */}
+        <Link href="/items/power">
+          <div className="bg-white shadow-md rounded-lg p-6 hover:bg-blue-50 transition cursor-pointer">
+            <h2 className="text-xl font-semibold mb-2 text-blue-500">💪 Puissance des Objets</h2>
+            <p className="text-gray-600">Classez les objets selon leur puissance pour votre niveau.</p>
+          </div>
+        </Link>
       </div>
 
       {/* Appel à l'action */}

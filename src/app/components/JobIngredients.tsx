@@ -1,5 +1,6 @@
 import React from 'react'
 import { JobComplete } from '../interfaces/job';
+import CopyButton from './CopyButton';
 
 interface JobIngredientsProps {
     editingData: {
@@ -25,6 +26,7 @@ export default function JobIngredients({ editingData, handleDataChange, job, ren
                 return (
                     <li key={index} className="mt-2 p-2 border rounded-md">
                         <strong>{ingredient.quantity}x {ingredient.item.name}</strong>
+                        <CopyButton text={ingredient.item.name} />
                         {ingredient.item.sellMode === 'single_only' && (
                             <span className="ml-2 text-yellow-500">(Vente uniquement à l&apos;unité)</span>
                         )}
