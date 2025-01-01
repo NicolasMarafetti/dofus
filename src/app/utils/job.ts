@@ -30,6 +30,8 @@ export const createJobIngredients = async (jobId: string, recipeData: ItemRecipe
     try {
         console.info(`🛠️ Début de la création des ingrédients pour le métier ${jobId}`);
 
+        let repairDone = false;
+
         // Étape 1 : Créer ou vérifier l'existence des objets ingrédients
         for (const ingredientId of recipeData.ingredientIds) {
             const existingItem = await prisma.item.findFirst({
@@ -38,6 +40,7 @@ export const createJobIngredients = async (jobId: string, recipeData: ItemRecipe
 
             if (!existingItem) {
                 console.info(`📦 L'objet avec dofusdbId ${ingredientId} n'existe pas. Création en cours...`);
+                repairDone = true;
                 await createItemFromApi(ingredientId, false);
             } else {
                 console.info(`✅ L'objet avec dofusdbId ${ingredientId} existe déjà.`);
@@ -73,6 +76,7 @@ export const createJobIngredients = async (jobId: string, recipeData: ItemRecipe
             }
 
             // Créer l'ingrédient
+            repairDone = true;
             await prisma.jobIngredient.create({
                 data: {
                     jobId: jobId,
@@ -84,6 +88,8 @@ export const createJobIngredients = async (jobId: string, recipeData: ItemRecipe
         }
 
         console.info(`🎯 Création des ingrédients terminée pour le métier ${jobId}`);
+
+        return repairDone;
     } catch (error) {
         console.error('❌ Erreur lors de la création des ingrédients :', error);
     } finally {
@@ -141,10 +147,10 @@ export const getMissingJobs = async () => {
     console.info('🎯 Synchronisation des jobs terminée.');
 }
 
-export const repairJobs = async (maxLevelItem: number) => {
+export const repairJobs = async (maxLevelItem: number, minLevelItem: number = 1) => {
     console.info('🛠️ Début de la réparation des crafts...');
 
-    const itemsData = await getItemsWithRecipeFromApi(1, maxLevelItem);
+    const itemsData = await getItemsWithRecipeFromApi(minLevelItem, maxLevelItem);
 
     let repairCount = 0;
 
@@ -184,8 +190,11 @@ export const repairJobs = async (maxLevelItem: number) => {
         }
 
         // Puis on créer si besoin les composants du craft, ou sinon on les lie au craft précedemment créé
-        await createJobIngredients(savedJob.id, itemRecipe);
-        repairCount++;
+        const repairWasNeeded = await createJobIngredients(savedJob.id, itemRecipe);
+
+        if (repairWasNeeded) {
+            repairCount++;
+        }
     }
 
     repairCount++;

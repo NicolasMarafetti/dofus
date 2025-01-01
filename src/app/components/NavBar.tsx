@@ -10,7 +10,7 @@ const NavBar: React.FC = () => {
                     alt="Logo de L'Almanach de Maraf"
                     className="w-10 h-10"
                 />
-                <span className="text-xl font-bold">L'Almanach de Maraf</span>
+                <span className="text-xl font-bold">L&apos;Almanach de Maraf</span>
             </Link>
 
             {/* Liens de navigation */}

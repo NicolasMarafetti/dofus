@@ -2,6 +2,7 @@
 'use client';
 
 import CopyButton from '@/app/components/CopyButton';
+import ItemImage from '@/app/components/ItemImage';
 import NavBar from '@/app/components/NavBar';
 import { Effect } from '@/app/interfaces/item';
 import { calculateEffectPower, calculateItemPower } from '@/app/utils/item';
@@ -18,7 +19,7 @@ const DEFAULT_WEIGHTS: { [key: string]: number } = {
   'Portée': 51,
   '% Critique': 10,
   'Dommage': 5,
-  'Arme de chasse': 5,
+  'Arme de chasse': 500,
   'Dommage Critiques': 5,
   'Dommage Feu': 5,
   'Prospection': 3,
@@ -209,9 +210,11 @@ const PowerItemsPage: React.FC = () => {
 
               return (
                 <li key={item.id} className="border p-2 mb-2 rounded">
-                  <span>
+                  <span className="flex items-center space-x-2">
+                    <ItemImage item={item} size="small" />
                     <strong>{item.name}</strong> <CopyButton text={item.name} />
                     (Niveau: {item.level}) - Puissance: <strong>{calculateItemPower(item, characteristicWeights)}</strong>
+                    <span>Emplacement: <strong>{item.categoryName}</strong></span>
                   </span>
                   <ul>
                     {itemEffects.map((effect: Effect, index: number) => {
