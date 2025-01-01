@@ -4,11 +4,19 @@
  * @returns Le nom du statut nettoyé.
  */
 export function cleanEffectDescription(description: string): string {
-    // Retirer les placeholders comme #1, #2, {{~ps}}, {{~zs}}, etc.
     return description
-        .replace(/#\d+/g, '') // Retire les #2, #1, etc.
-        .replace(/\{\{[^}]+\}\}/g, '') // Retire {{~ps}}, {{~zs}}, etc.
-        .replace(/{{[^}]+}}/g, '') // Prend en compte d'autres structures {{...}}
-        .replace(/\s+/g, ' ') // Remplace les espaces multiples par un seul
-        .trim(); // Retire les espaces inutiles au début et à la fin
+        // Retirer les placeholders comme #1, #2
+        .replace(/#\d+\s*/g, '') // Supprime #1, #2 avec l'espace après
+        // Retirer les placeholders dynamiques {{~ps}}, {{~zs}}, etc.
+        .replace(/\{\{[^}]+\}\}/g, '') // Supprime les structures comme {{~ps}}
+        // Retirer les espaces multiples
+        .replace(/\s{2,}/g, ' ') // Remplace les espaces multiples par un seul
+        // Retirer les tirets et espaces inutiles
+        .replace(/^-/, '') // Supprime un tiret au début
+        // Nettoyer les restes de texte non pertinents
+        .replace(/Dommage{{~ps}}{{~zs}}/g, 'Dommage')
+        .replace(/Pod{{~ps}}{{~zs}}/g, 'Pod')
+        .replace(/Invocation{{~ps}}{{~zs}}/g, 'Invocation')
+        // Retirer les espaces au début et à la fin
+        .trim();
 }

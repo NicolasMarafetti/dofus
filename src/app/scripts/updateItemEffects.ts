@@ -49,10 +49,12 @@ export async function updateItemEffects(characterLevel: number, reExportAlreadyU
           continue;
         }
 
-        // On ne prend que ce qui est bonusType 1
+        // On ne prend que ce qui est bonusType 1 (non, par exemple la sagesse en négative / les PA en négatif)
+        /*
         if (effectData.bonusType !== 1) {
           continue;
         }
+        */
 
         const effectDescriptionFr = cleanEffectDescription(effectData.description.fr);
 

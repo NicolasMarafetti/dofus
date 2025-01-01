@@ -5,6 +5,7 @@ import { createJobIngredients } from "./job";
 import { Effect, ItemFromApiWhenTakingAllItems } from "../interfaces/item";
 import { fetchEffectsFromAPI } from "./effects";
 import { cleanEffectDescription } from "./parseEffect";
+import { CharacteristicWeight } from "../items/power/page";
 
 const prisma = new PrismaClient();
 
@@ -57,21 +58,42 @@ function isItemNotFoundResponse(item: ItemRecipesResponse | ItemNotFoundResponse
     return false;
 }
 
-export const calculateEffectPower = (effect: Effect) => {
-    const averageEffectQuantity = (effect.from + effect.to) / 2;
-    return averageEffectQuantity * effect.effectPowerRate;
-}
+export const calculateEffectPower = (
+    effect: Effect,
+    characteristicWeights: CharacteristicWeight | null = null
+): number => {
+    // Détermine le poids de l'effet
+    const weight = characteristicWeights?.[effect.effect]?.power ?? effect.effectPowerRate ?? 1;
 
-export const calculateItemPower = (item: Item) => {
-    const effects = JSON.parse(item.effects as string);
-    let power = 0;
+    let effectValue: number;
 
-    for (const effect of effects) {
-        power += calculateEffectPower(effect);
+    if (effect.to !== 0 && effect.to > effect.from) {
+        // Cas d'une plage : Moyenne entre from et to
+        effectValue = (effect.from + effect.to) / 2;
+    } else if (effect.to === 0) {
+        // Cas d'une valeur fixe : Utilise directement from
+        effectValue = effect.from;
+    } else {
+        // Cas de sécurité (ne devrait pas arriver)
+        effectValue = effect.from;
     }
 
-    return power;
-}
+    // Calcule la puissance de l'effet
+    return effectValue * weight;
+};
+
+export const calculateItemPower = (
+    item: Item,
+    characteristicWeights: CharacteristicWeight | null = null
+) => {
+    if (!item.effects) return 0;
+
+    const effects: Effect[] = JSON.parse(item.effects as string);
+
+    return effects.reduce((total, effect) => {
+        return total + calculateEffectPower(effect, characteristicWeights);
+    }, 0);
+};
 
 export const createItemFromApi = async (itemDofusDbId: number, saveJob: boolean = true) => {
     // Je vérifie si l'objet est déjà créer

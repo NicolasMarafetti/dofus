@@ -33,13 +33,15 @@ export default function PlanWhatToBuy({ plan, onSaveResourcePrice }: PlanWhatToB
         setEditingItemId(null); // Quitter le mode édition
     };
 
+    const groupedRessourcesOrderedByTotalCost = plan?.groupedResources.sort((a, b) => b.totalCost - a.totalCost) ?? [];
+
     if (!plan) return;
 
     return (
         <div className="mb-8">
             <h4 className="text-lg font-bold mb-2">Ressources à acheter :</h4>
             <ul className="list-disc list-inside">
-                {plan.groupedResources.map((res, index: number) => (
+                {groupedRessourcesOrderedByTotalCost.map((res, index: number) => (
                     <li key={index} className="flex items-center mt-1">
                         <span>
                             {res.quantity.toLocaleString()}x {res.item.name} (Prix unitaire : {res.price}) -{' '}

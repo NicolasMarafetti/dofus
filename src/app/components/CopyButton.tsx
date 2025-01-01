@@ -1,8 +1,13 @@
-import React from 'react'
+import React from 'react';
 
 export default function CopyButton({ text }: { text: string }) {
+    const removeAccents = (str: string) => {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    };
+
     const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
+        const textWithoutAccents = removeAccents(text);
+        navigator.clipboard.writeText(textWithoutAccents);
     };
 
     return (
@@ -13,5 +18,5 @@ export default function CopyButton({ text }: { text: string }) {
         >
             📋
         </button>
-    )
+    );
 }

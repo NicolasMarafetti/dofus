@@ -1,4 +1,5 @@
 import { CATEGORY_MAPPING } from '@/app/constants/constants';
+import { Effect } from '@/app/interfaces/item';
 import { calculateItemPower } from '@/app/utils/item';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     });
 
     const equipmentsItems = itemsEquipable.filter((item) => {
-        if(!item.categoryName) return false;
+        if (!item.categoryName) return false;
         return CATEGORY_MAPPING['Équipements'].includes(item.categoryName);
     });
 
@@ -33,5 +34,29 @@ export async function GET(req: NextRequest) {
         return calculateItemPower(b) - calculateItemPower(a);
     });
 
-    return NextResponse.json({ items: itemsOrderedByPower });
+    // Extraire les caractéristiques uniques
+    const uniqueCharacteristicsMap = new Map<string, { name: string; power: number }>();
+
+    itemsOrderedByPower.forEach((item) => {
+        if (item.effects) {
+            const effects: Effect[] = JSON.parse(item.effects as string);
+            effects.forEach((effect) => {
+                // Utiliser une clé unique basée sur le nom de l'effet
+                if (!uniqueCharacteristicsMap.has(effect.effect)) {
+                    uniqueCharacteristicsMap.set(effect.effect, {
+                        name: effect.effect,
+                        power: effect.effectPowerRate ?? 1 // Utiliser 1 si effectPowerRate est undefined
+                    });
+                }
+            });
+        }
+    });
+
+    // Convertir la Map en tableau
+    const uniqueCharacteristics = Array.from(uniqueCharacteristicsMap.values());
+
+    return NextResponse.json({
+        items: itemsOrderedByPower,
+        characteristics: uniqueCharacteristics,
+    });
 }

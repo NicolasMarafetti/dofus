@@ -82,8 +82,6 @@ const PlanForm: React.FC = () => {
                     <PlanCrafts currentLevel={currentLevel} plan={plan} onSaveResourcePrice={onSaveResourcePrice} />
                 </div>
             )}
-
-
         </div>
     );
 };

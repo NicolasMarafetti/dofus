@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { calculateXpGained } from '../utils/xpCalculator';
 import { getItemMinPrice } from '../utils/item';
 import { GroupedCraftPlan } from '../interfaces/plan';
+import CopyButton from './CopyButton';
 
 interface PlanCraftsProps {
     currentLevel: number;
@@ -16,10 +17,6 @@ export default function PlanCrafts({ currentLevel, plan, onSaveResourcePrice }: 
     const [price1, setPrice1] = useState<number | null>(null);
     const [price10, setPrice10] = useState<number | null>(null);
     const [price100, setPrice100] = useState<number | null>(null);
-
-    const handleCopyResourceName = (name: string) => {
-        navigator.clipboard.writeText(name);
-    };
 
     const handleEditResource = (resourceId: string, currentPrice1: number | null, currentPrice10: number | null, currentPrice100: number | null) => {
         setEditingResourceId(resourceId);
@@ -40,9 +37,13 @@ export default function PlanCrafts({ currentLevel, plan, onSaveResourcePrice }: 
             <h4 className="text-lg font-bold mb-2">Crafts à effectuer :</h4>
             {plan.groupedPlan.map((craft: GroupedCraftPlan, index: number) => (
                 <div key={index} className="mb-4 border-b pb-4">
-                    <h5 className="font-semibold">
-                        {craft.name} (x{craft.quantity.toLocaleString()})
-                    </h5>
+                    <div className="flex items-center">
+                        <h5 className="font-semibold">
+                            {craft.name} (x{craft.quantity.toLocaleString()})
+                        </h5>
+                        <CopyButton text={craft.name} />
+                    </div>
+
                     <p>
                         <strong>Coût total :</strong> {(craft.cost * craft.quantity).toLocaleString()} kamas
                     </p>
@@ -57,13 +58,7 @@ export default function PlanCrafts({ currentLevel, plan, onSaveResourcePrice }: 
                                     {res.quantity * craft.quantity}x {res.item.name} (Prix unitaire : {getItemMinPrice(res.item)})
                                 </span>
                                 <div className="flex gap-2">
-                                    {/* Bouton Copier */}
-                                    <button
-                                        onClick={() => handleCopyResourceName(res.item.name)}
-                                        className="text-blue-500 underline hover:text-blue-700"
-                                    >
-                                        Copier
-                                    </button>
+                                    <CopyButton text={res.item.name} />
 
                                     {/* Bouton Modifier */}
                                     {editingResourceId === res.id ? (
