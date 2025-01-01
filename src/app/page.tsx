@@ -1,12 +1,24 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      {/* Logo */}
+      <div className="mb-4">
+        <Image
+          src="/logo.png"
+          alt="Logo de L'Almanach de Maraf"
+          width={150}
+          height={150}
+          priority
+        />
+      </div>
+
       {/* Titre principal */}
-      <h1 className="text-5xl font-bold text-blue-500 mb-4">Dofus Leveling</h1>
+      <h1 className="text-5xl font-bold text-blue-500 mb-4">L'Almanach de Maraf</h1>
       <p className="text-lg text-gray-700 mb-8 text-center max-w-2xl">
         Optimisez la montée en niveau de vos métiers, gérez vos crafts, analysez vos ressources, 
         et trouvez les méthodes les plus rentables pour progresser.
